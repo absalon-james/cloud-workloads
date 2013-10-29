@@ -3,6 +3,9 @@
 # C extensions
 *.so
 
+# random log files
+*.log
+
 # Packages
 *.egg
 *.egg-info
