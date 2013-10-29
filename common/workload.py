@@ -7,12 +7,6 @@ class Workload(object):
     Data collected during execution should go into self.data
     """
 
-    def __init__(self):
-        """Nothing for now"""
-        self._config = self._config()
-        self._data = {}
-        pass
-
     def _config(self):
         """
         Should load any necessary configuration for the workload.
