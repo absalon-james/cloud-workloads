@@ -12,7 +12,7 @@ class Iteration(dict):
 
     success_percentage_ok = 'success_percentage_ok'
     mean_response_time_ok = 'mean_response_time_ok'
-    mean_response_time = 'mean_response_time'
+    _mean_response_time_ = 'mean_response_time'
     report_location = 'report_location'
 
     def __init__(self, users, duration, webheads, output):
@@ -27,7 +27,7 @@ class Iteration(dict):
             'webheads': webheads,
             self.success_percentage_ok: False,
             self.mean_response_time_ok: False,
-            self.mean_response_time: None,
+            self._mean_response_time_: None,
             self.report_location: None
         })
         self._parse(output)
@@ -47,7 +47,7 @@ class Iteration(dict):
                 if line[-5:-1] == 'true':
                     self[self.mean_response_time_ok] = True
             elif line.startswith(self.mean_response_time_tag):
-                self[self.mean_response_time] = line.split()[2]
+                self[self._mean_response_time_] = line.split()[2]
             elif line.startswith(self.report_location_tag):
                 self[self.report_location] = line.split()[-1]
 
@@ -76,6 +76,10 @@ class Iteration(dict):
     def duration(self):
         return self['duration']
 
+    @property
+    def mean_response_time(self):
+        return self[self._mean_response_time_]
+
     def __str__(self):
         return "\n\t".join([
             "Gatling Iteration of %s users over %s seconds" % (self.users, self.duration),
@@ -83,7 +87,7 @@ class Iteration(dict):
             "Successful: %s" % self.success,
             "Successful request percentage pass: %s" % self[self.success_percentage_ok],
             "Mean response time pass: %s" % self[self.mean_response_time_ok],
-            "Mean response time: %s ms" % self[self.mean_response_time],
+            "Mean response time: %s ms" % self.mean_response_time,
             "Report location: %s" % self.report,
             "Simulation log: %s" % self.simulation_log])
             

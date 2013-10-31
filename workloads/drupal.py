@@ -6,8 +6,9 @@ import subprocess
 from common.workload import Workload
 from common.gatling.iteration import Iteration
 from common.gatling.stats import Stats
+from common.view import View
 
-class DrupalWorkload(Workload):
+class Workload(Workload):
     """
     Class that handles a drupal cloud workload.
     """
@@ -49,6 +50,10 @@ class DrupalWorkload(Workload):
         self._conf.update(gatling_path=parser.get("gatling", "path"))
 
     @property
+    def name(self):
+        return "Drupal"
+
+    @property
     def users_start(self):
         return int(self._conf.get('users_start'))
 
@@ -70,7 +75,11 @@ class DrupalWorkload(Workload):
 
     @property
     def best_iteration(self):
-        return self._iterations[-2]
+        if len(self._iterations) > 1:
+            return self._iterations[-2]
+        elif len(self._iterations) > 0:
+            return self._iterations[-1]
+        return None
 
     def command(self):
         """
@@ -123,23 +132,24 @@ class DrupalWorkload(Workload):
             if process.returncode not in [0, 2]:
                 # Handle bad codes
                 break
-
             if iteration.success == False:
                 break
-
             users += step
 
-        print "Last successful iteration"
-        print self.best_iteration
-        stats = Stats(self.best_iteration)
-        print "Runs: %s" % len(stats.runs)
-        print "Scenarios: %s" % len(stats.scenarios)
-        print "Requests: %s" % len(stats.requests)
-        print "Requests per second plot: %s" % stats.requests_per_second_plot
-        print "Active sessions per second plot: %s" % stats.sessions_per_second_plot
-        print "Response time plot: %s" % stats.response_times_plot
-        
+    def view(self):
+        iteration = self.best_iteration
+        stats = Stats(iteration)
 
+        view = View('drupal.html', {
+            'users': iteration.users,
+            'duration': iteration.duration,
+            'mean_response_time': iteration.mean_response_time,
+            'requests_per_second_plot': stats.requests_per_second_plot,
+            'active_sessions_per_second_plot': stats.sessions_per_second_plot,
+            'response_times_plot': stats.response_times_plot            
+        })
+
+        return view
+        
 if __name__ == '__main__':
-    load = DrupalWorkload()
-    load.run()
+    Workload().run()

@@ -1,0 +1,48 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <script type="text/javascript" src="jquery-1.10.2.min.js"></script>
+        <script type="text/javascript" src="canvasjs.min.js"></script>
+        <script type="text/javascript">
+            var data = {};
+        </script>
+        <script type="text/javascript" src="out.js"></script>
+        <script type="text/javascript">
+        </script>
+        <link rel="stylesheet" type="text/css" href="style.css" />
+    </head>
+    <body>
+        <div class="page-container">
+            <fieldset id="scores">
+            <legend>Your Score</legend>
+                <div id="scores-chart">
+                    <table>
+                    <tr>
+                        <td class="score overall" rowspan="3" id="primitives-overall">27</td>
+                        <td class="label individual">CPU</td>
+                        <td class="score individual" id="primitives-cpu">0</td>
+                    </tr>
+                    <tr>
+                        <td class="label individual">IO</td>
+                        <td class="score individual" id="primitives-io">0</td>
+                    </tr>
+                    <tr>
+                        <td class="label individual">Network</td>
+                        <td class="score individual" id="primitives-network">0</td>
+                    </tr>
+                    </table>
+                </div>
+
+                <div id="scores-explanation">
+                    <h3>What does this mean?</h3>
+                    <p>"Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.</p>
+                </div>            
+            </fieldset>
+
+            <fieldset>
+            <legend>Real World Applications</legend>
+                ${workloads}
+            </fieldset>
+        </div>
+    </body>
+</html>

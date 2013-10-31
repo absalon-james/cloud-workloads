@@ -1,0 +1,107 @@
+<div class="application" id="drupal">
+    <h3>Drupal</h3>
+    <div class="scores">
+        <table>
+        <tr>
+            <td class="score-label">Users</td>
+            <td class="score-value" id="drupal-users">${users}</td>
+        </tr>
+        <tr>
+            <td class="score-label">Duration(s)</td>
+            <td class="score-value" id="drupal-duration">${duration}</td>
+        </tr>
+        <tr>
+            <td class="score-label">Mean Response Time(ms)</td>
+            <td class="score-value" id="drupal-mean">${mean_response_time}</td>
+        </tr>
+        </table>
+    </div>
+    <div class"explanation">
+        <p>
+        Our Drupal configuration is set up on four 8GB separate webheads.
+        Each webhead sports Apache2, PHP 5, Drupal 7, Memcached, and
+        Alternative PHP Cache. For the database, two 8GB MySQL nodes are set up
+        in a master/slave configuration. Drupal consumes the additional modules
+        Devel and Memcache. Gatling Tool is used to increasingly apply load
+        until the average response time exceeds 1000ms or the percentage of
+        successful requests drops below 99%. The last successful iteration's
+        results are displayed.
+        </p>
+        <p>
+            <a href="http://gatling-tool.org/">Gatling</a>,
+            <a href="http://httpd.apache.org/">Apache2</a>,
+            <a href="https://drupal.org/drupal-7.0">Drupal 7</a>,
+            <a href="http://memcached.org/">Memcached</a>,
+            <a href="http://www.mysql.com/">MySQL</a>,
+            <a href="http://php.net/">PHP 5</a>,
+            <a href="http://php.net/manual/en/book.apc.php">Alternative PHP Cache</a>
+        </p>
+        <p>
+            Additional Drupal Modules:
+            <a href="https://drupal.org/project/devel">Devel</a>,
+            <a href="https://drupal.org/project/memcache">Memcache</a>
+        </p>
+    </div>
+    <div class="clearfix"></div>
+    <div class="graph-container">
+        <h4 class="title">Requests and Sessions</h4>
+        <div class="graph" id="gatling-drupal-request-session"></div>
+    </div>
+
+    <div class="graph-container">
+        <h4 class="title">Response Time Distribution</h4>
+        <div class="graph" id="gatling-drupal-response-time"></div>
+    </div>
+    <script type="text/javascript">
+    $$(function() {
+
+        var graph = {
+            theme: "theme1",
+            toolTip: {shared: "true"},
+            axisY: {title: "Per Second"},
+            data: [
+                {
+                    type: "spline",
+                    showInLegend: true,
+                    xValueType: "dateTime",
+                    name: "Requests Per Second",
+                    legendText: "Requests Per Second",
+                    dataPoints: ${requests_per_second_plot}
+                },
+                {
+                    type: "spline",
+                    showInLegend: true,
+                    xValueType: "dateTime",
+                    name: "Active Sessions Per Second",
+                    dataPoints: ${active_sessions_per_second_plot}
+                }
+            ]
+        };
+
+        var chart = new CanvasJS.Chart("gatling-drupal-request-session", graph);
+        chart.render();
+
+        var response_times = ${response_times_plot};
+
+        graph = {
+            theme: "theme1",            
+            axisY: {title: "Requests"},
+            data: [
+                {
+                    type: "column",
+                    name: "Response Times",
+                    toolTipContent: "<span style='\"'color: {color};'\"'><strong>{y} Requests</strong></span>",
+                    dataPoints: [
+                        {y: response_times["t <= 800ms"], label: "t <= 800ms"},
+                        {y: response_times["800ms < t <= 1200ms"], label: "800ms < t <= 1200ms"},
+                        {y: response_times["t > 1200ms"], label: "t > 1200ms"},
+                        {y: response_times["failed"], label: "failed"}
+                    ]                    
+                }
+            ]            
+        }
+        chart = new CanvasJS.Chart("gatling-drupal-response-time", graph);
+        chart.render();
+    });
+    </script>
+</div>
