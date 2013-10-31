@@ -1,1 +1,0 @@
-# cloud workload initialization stuffs
