@@ -26,3 +26,12 @@ class Workload(object):
 
         :returns: String html representation of workload output
         """
+
+    @property
+    def name(self):
+        """
+        Returns the name of the workload.
+
+        :returns: String name of the workload
+        """
+        return "!!! Name not set !!!"

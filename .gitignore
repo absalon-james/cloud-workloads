@@ -6,6 +6,8 @@
 # random log files
 *.log
 
+*.swp
+
 # Packages
 *.egg
 *.egg-info

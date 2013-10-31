@@ -1,4 +1,4 @@
-<div class="application" id="drupal">
+<div class="application" id="magento">
     <h3>Drupal</h3>
     <div class="scores">
         <table>
@@ -18,39 +18,31 @@
     </div>
     <div class"explanation">
         <p>
-        Our Drupal configuration is set up on four 8GB separate webheads.
-        Each webhead sports Apache2, PHP 5, Drupal 7, Memcached, and
-        Alternative PHP Cache. For the database, two 8GB MySQL nodes are set up
-        in a master/slave configuration. Drupal consumes the additional modules
-        Devel and Memcache. Gatling Tool is used to increasingly apply load
-        until the average response time exceeds 1000ms or the percentage of
-        successful requests drops below 99%. The last successful iteration's
-        results are displayed.
+        Our Magento configuration is set up on 3 8GB separate webheads. Each
+        webhead sports Apache2, PHP 5 and Magento 1.8 Community Edition.
+        A single 8 GB MySQL node is used for the database. The database is
+        prepopulated with magento-sample-data-1.6.1.0. Gatling Tool is used
+        to increasingly apply load until the average response time exceeds
+        1000ms or the percentage of successful requests drops below 99%.
+        The last successful iteration's results are displayed.
         </p>
         <p>
             <a href="http://gatling-tool.org/">Gatling</a>,
             <a href="http://httpd.apache.org/">Apache2</a>,
-            <a href="https://drupal.org/drupal-7.0">Drupal 7</a>,
-            <a href="http://memcached.org/">Memcached</a>,
+            <a href="http://www.magentocommerce.com/product/community-edition/">Magento 1.8 Community Edition</a>,
             <a href="http://www.mysql.com/">MySQL</a>,
-            <a href="http://php.net/">PHP 5</a>,
-            <a href="http://php.net/manual/en/book.apc.php">Alternative PHP Cache</a>
-        </p>
-        <p>
-            Additional Drupal Modules:
-            <a href="https://drupal.org/project/devel">Devel</a>,
-            <a href="https://drupal.org/project/memcache">Memcache</a>
+            <a href="http://php.net/">PHP5</a>
         </p>
     </div>
     <div class="clearfix"></div>
     <div class="graph-container">
         <h4 class="title">Requests and Sessions</h4>
-        <div class="graph" id="gatling-drupal-request-session"></div>
+        <div class="graph" id="gatling-magento-request-session"></div>
     </div>
 
     <div class="graph-container">
         <h4 class="title">Response Time Distribution</h4>
-        <div class="graph" id="gatling-drupal-response-time"></div>
+        <div class="graph" id="gatling-magento-response-time"></div>
     </div>
     <script type="text/javascript">
     $$(function() {
@@ -78,7 +70,7 @@
             ]
         };
 
-        var chart = new CanvasJS.Chart("gatling-drupal-request-session", graph);
+        var chart = new CanvasJS.Chart("gatling-magento-request-session", graph);
         chart.render();
 
         var response_times = ${response_times_plot};
@@ -100,7 +92,7 @@
                 }
             ]            
         }
-        chart = new CanvasJS.Chart("gatling-drupal-response-time", graph);
+        chart = new CanvasJS.Chart("gatling-magento-response-time", graph);
         chart.render();
     });
     </script>

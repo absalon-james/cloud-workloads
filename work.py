@@ -36,7 +36,6 @@ def load_workload_classes(loads):
     """
     workload_classes = []
     for load in loads:
-        print "Attempting to load %s" % load
         try:
             module = __import__('.'.join(['workloads', load]), fromlist=[load])
             workload_classes.append(module.Workload)
@@ -56,10 +55,7 @@ if __name__ == "__main__":
     loads = [load for key, load in parser.items("loads")]
 
     classes = load_workload_classes(loads)
-    print "Classes: ", classes
-
     runner = Runner(classes)
     runner.run()
-
     with open("index.html", "w") as outfile:
         outfile.write(runner.view())
