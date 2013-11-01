@@ -39,3 +39,9 @@ nosetests.xml
 .mr.developer.cfg
 .project
 .pydevproject
+
+config/conf.ini
+config/drupal.ini
+config/magento.ini
+config/mysql.ini
+config/hadoop.ini
