@@ -33,7 +33,6 @@ class Iteration(dict):
         for line in output:
             line = line[:-1]
             if line.endswith(self.tpm_tag):
-                print "Tpm Tag found: ", line
                 new_tpm = float(line.split()[0])
                 self['delta'] = new_tpm - self.previous_tpm
                 self['tpm'] = new_tpm

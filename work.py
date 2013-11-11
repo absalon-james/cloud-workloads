@@ -19,7 +19,7 @@ class Runner(object):
 
     def view(self):        
         mapping = { 
-            'workloads': ''.join([instance.view() for instance in self.instances]),
+            'workloads': '<hr />'.join([instance.view() for instance in self.instances]),
             'primitives': ''
         }
         return View('main.html', mapping=mapping)
