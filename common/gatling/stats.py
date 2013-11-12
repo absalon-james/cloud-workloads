@@ -1,4 +1,3 @@
-
 class Action(list):
     """
     Base class for modeling an action in the gatling simulation.log.
@@ -13,6 +12,7 @@ class Action(list):
         :returns: String type of action
         """
         return self[0]
+
 
 class RunAction(Action):
     """
@@ -47,10 +47,13 @@ class RunAction(Action):
         """
         return self[3]
 
+
 class RequestAction(Action):
     """
     Models a request action in the simulation.log file
-    <action> <scenario name> <user id> <groups> <request name> <request start date> <request end date> <response start date> <response end date> <status> <extra info>
+    <action> <scenario name> <user id> <groups> <request name>
+        <request start date> <request end date> <response start date>
+        <response end date> <status> <extra info>
     """
 
     @property
@@ -152,6 +155,7 @@ class RequestAction(Action):
         """
         return self[10]
 
+
 class ScenarioAction(Action):
     """
     Models a scenario action from a gatling simulation.log file
@@ -194,6 +198,7 @@ class ScenarioAction(Action):
         """
         return int(self[4])
 
+
 class Stats(dict):
     """
     Models and groups all of the actions inside of a simulation.log file
@@ -202,57 +207,110 @@ class Stats(dict):
     _action_classes = {
         'RUN': RunAction,
         'REQUEST': RequestAction,
-         'SCENARIO': ScenarioAction}
+        'SCENARIO': ScenarioAction
+    }
 
     @property
     def scenarios(self):
+        """
+        Returns all scenerios
+
+        :return: List
+        """
         return self._actions['SCENARIO']
 
     @property
     def requests(self):
+        """
+        Returns all requests
+
+        :return: List
+        """
         return self._actions['REQUEST']
 
     @property
     def runs(self):
+        """
+        Returns all runs
+
+        :return: List
+        """
         return self._actions['RUN']
 
     @property
     def duration(self):
+        """
+        Returns the total time.
+
+        :return: Integer
+        """
         return self.end_time - self.start_time
 
     @property
     def times(self):
+        """
+        Returns an xrange starting with the start time and
+        1000 ms intervals all the way up to the end time.
+
+        :return: xrange
+        """
         return xrange(self.start_time, self.end_time, 1000)
 
     @property
     def requests_per_second_plot(self):
+        """
+        Counts the number of requests that have completed from
+        second to second and records them into a plot for graphing.
+
+        :return: List of datapoints
+        """
         points = []
         total = 0
         for time in self.times:
-            new_total = len([True for it in self.requests if time > it.response_end])
+            def finished(total, request):
+                if time > request.response_end:
+                    total += 1
+                return total
+            new_total = reduce(finished, self.requests, 0)
             points.append({'x': time, 'y': new_total - total})
             total = new_total
         return points
 
     @property
     def sessions_per_second_plot(self):
+        """
+        Counts the number of active sessions at each 1000 ms interval and
+        records them into a plot for graphing.
+
+        :return: List of datapoints
+        """
         points = []
         for time in self.times:
-            sessions = len([True for it in self.scenarios if time >= it.start_time and time <= it.end_time])
-            points.append({'x': time, 'y': sessions})
+            def active(total, session):
+                if time >= session.start_time and time <= session.end_time:
+                    total += 1
+                return total
+            sessions = reduce(active, self.scenarios, 0)
+            points.append({'x': time, 'y': reduce(active, self.scenarios, 0)})
         return points
 
     @property
     def response_times_plot(self):
+        """
+        Creates a distribution of response times grouping them into
+        4 main groups.
+
+        :return: Dictionary
+        """
         response_times = {
             't <= 800ms': 0,
             '800ms < t <= 1200ms': 0,
             't > 1200ms': 0,
             'failed': 0
         }
-        
+
         for r in self.requests:
-            if r.success == False:
+            if r.success is False:
                 response_times['failed'] += 1
                 continue
             if r.response_time <= 800:
@@ -264,7 +322,12 @@ class Stats(dict):
         return response_times
 
     def __init__(self, iteration):
+        """
+        Inits the stats object parsing through the simulation.log file
+        indicated by the iteration.
 
+        :param iteration: Gatling iteration to provide stats for.
+        """
         self._actions = {
             'RUN': [],
             'REQUEST': [],
@@ -274,7 +337,8 @@ class Stats(dict):
         with open(iteration.simulation_log) as logfile:
             for line in logfile:
                 line = line.strip("\n").split("\t")
-                self._actions[line[0]].append(self._action_classes[line[0]](line))
+                self._actions[line[0]].append(
+                    self._action_classes[line[0]](line))
 
         self.end_time = max([it.end_time for it in self.scenarios])
         self.start_time = min([it.start_time for it in self.scenarios])

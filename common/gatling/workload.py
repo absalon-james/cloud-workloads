@@ -7,6 +7,7 @@ from common.workload import Workload as BaseWorkload
 from iteration import Iteration
 from stats import Stats
 
+
 class Workload(BaseWorkload):
     """
     Class that handles a Gatling cloud workload.
@@ -42,7 +43,7 @@ class Workload(BaseWorkload):
         parser.set("gatling", "path", "~/gatling")
 
         parser.read(conf_file)
-        
+
         webheads = [webhead for key, webhead in parser.items("webheads")]
         self._conf.update(webheads=webheads)
         self._conf.update(duration=parser.get("run", "duration"))
@@ -54,7 +55,7 @@ class Workload(BaseWorkload):
     def name(self):
         """
         Returns name of the workload.
-    
+
         :returns: String name of the workload
         """
         return "Gatling"
@@ -153,10 +154,10 @@ class Workload(BaseWorkload):
         duration = duration or self.duration
         webheads = webheads or ','.join(self.webheads)
         env = dict(os.environ)
-        env['JAVA_OPTS'] =  "-Dusers=%s -Dtime=%s -Dwebheads=%s" % (
+        env['JAVA_OPTS'] = "-Dusers=%s -Dtime=%s -Dwebheads=%s" % (
             users, duration, webheads)
         return env
-                
+
     def run(self):
         """
         Runs the Gatling workload
@@ -182,7 +183,7 @@ class Workload(BaseWorkload):
             if process.returncode not in [0, 2]:
                 # Handle bad codes
                 break
-            if iteration.success == False:
+            if not iteration.success:
                 break
             users += step
 

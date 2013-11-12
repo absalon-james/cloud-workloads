@@ -17,7 +17,7 @@ class Workload(object):
 
     def run(self):
         """Runs the workload"""
-        return False
+        pass
 
     def view(self):
         """
@@ -26,6 +26,7 @@ class Workload(object):
 
         :returns: String html representation of workload output
         """
+        return "missing view method"
 
     @property
     def name(self):
@@ -34,4 +35,4 @@ class Workload(object):
 
         :returns: String name of the workload
         """
-        return "!!! Name not set !!!"
+        return "missing name property"

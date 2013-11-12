@@ -5,6 +5,7 @@ import subprocess
 from common.workload import Workload as BaseWorkload
 from common.view import View
 
+
 class Iteration(dict):
     """
     Class that parses results from an iteration of dbt2 testing.
@@ -54,9 +55,10 @@ class Iteration(dict):
             "Warehouses used: %s " % self.get('warehouses'),
             "Connections: %s" % self.get('connections'),
             "Duration: %s minutes" % self.get('duration'),
-            "Unknown Errors: %s"  % self.get('unknown_errors'),
+            "Unknown Errors: %s" % self.get('unknown_errors'),
             "Rollback Transactions: %s" % self.get('rollback_transactions')
         ])
+
 
 class Workload(BaseWorkload):
     """
@@ -65,7 +67,7 @@ class Workload(BaseWorkload):
 
     def __init__(self):
         self._iterations = []
-        self._config() 
+        self._config()
 
     def _config(self):
         """
@@ -185,7 +187,7 @@ class Workload(BaseWorkload):
         Returns the total number of warehouses data was generated for.
         Taken from the config.
 
-        :returns: Integer       
+        :returns: Integer
         """
         return int(self._conf.get('warehouses'))
 
@@ -276,7 +278,9 @@ class Workload(BaseWorkload):
 
             # Rung the command
             args = self.command(warehouses=warehouses)
-            process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=devnull)
+            process = subprocess.Popen(args,
+                                       stdout=subprocess.PIPE,
+                                       stderr=devnull)
             output, err = process.communicate()
 
             # Only the listed return codes indicate success
@@ -285,7 +289,8 @@ class Workload(BaseWorkload):
 
             # Parse outout into a usuable form
             output = cStringIO.StringIO(output)
-            iteration = Iteration(output, previous_tpm, warehouses, self.host, self.connections)
+            iteration = Iteration(output, previous_tpm, warehouses,
+                                  self.host, self.connections)
 
             self._iterations.append(iteration)
             print iteration
@@ -293,7 +298,7 @@ class Workload(BaseWorkload):
             previous_tpm = iteration.get('tpm')
             if iteration.get('delta') < self.mindelta:
                 break
-            
+
             warehouses += 1
 
         print "\n\nBest iteration"
@@ -301,8 +306,9 @@ class Workload(BaseWorkload):
 
     @property
     def tpm_plot(self):
-        return [{'x': it.get('warehouses'), 'y': it.get('tpm')} for it in self._iterations]
-    
+        return [{'x': it.get('warehouses'),
+                'y': it.get('tpm')} for it in self._iterations]
+
     def view(self):
         """
         Should return a string view of this workload.  The string should be
@@ -314,7 +320,7 @@ class Workload(BaseWorkload):
         tpm_plot = self.tpm_plot
 
         return View('mysql.html', {
-            'tpm': best_iteration.get('tpm'), 
+            'tpm': best_iteration.get('tpm'),
             'warehouses': best_iteration.get('warehouses'),
             'tpm_plot': self.tpm_plot
         })
