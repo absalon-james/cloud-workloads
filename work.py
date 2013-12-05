@@ -15,12 +15,15 @@ class Runner(object):
             print ("---- Running workload %s " % instance.name).ljust(80, '-')
             print "-".ljust(80, '-')
             instance.run()
-            self.instances.append(instance)
+	    if (instance.is_primitive):
+		self.primitives = instance
+	    else:
+	        self.instances.append(instance)
 
     def view(self):        
         mapping = { 
             'workloads': ''.join([instance.view() for instance in self.instances]),
-            'primitives': ''
+            'primitives': self.primitives.view() or ''
         }
         return View('main.html', mapping=mapping)
 
