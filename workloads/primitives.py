@@ -288,61 +288,73 @@ class Workload(BaseWorkload):
             output = self.run_command(cmd)
         fb_data.parse(cmd, output)
 
-    	#analyze results. as before this is essentially a weighted average
-    	fb_info = { "randomrw.f": { 
-    				    "normalizer": 60.0,
-    				    "weight": 1
-    			    }
-    		  }
+        #analyze results. as before this is essentially a weighted average
+        fb_info = { "randomrw.f": 
+                    { 
+                        "normalizer": 60.0,
+                        "weight": 1
+                    }
+                }
         fb_create_score_dict = lambda x: {key:val for key,val in x.iteritems()}
         self.io_analyzer = bench_analyzer(fb_info, fb_create_score_dict, json_data=fb_data)
         #--------------------------------------------------
 
         #--------------------NET CMD------------------------
-    	#Get the local and remote commands that we'll need to run
-    	cmds = self.Network_commands()
-    	#Use paramiko to run the remote command then sleep for a few seconds to let the server spin up
-    	ssh = paramiko.SSHClient()
-    	ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    	ssh.connect(self.Network_remote_host, username=self.Network_remote_user, password=self.Network_remote_password)
-    	ssh.exec_command(" ".join(cmds["remote"]))
-    	time.sleep(5)
-    	
-    	#Run the local command
-    	output = self.run_command(cmds["local"])
-    	network_data = network_parser(output)
+        #Get the local and remote commands that we'll need to run
+        cmds = self.Network_commands()
+        #Use paramiko to run the remote command then sleep for a few seconds to let the server spin up
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        ssh.connect(self.Network_remote_host, username=self.Network_remote_user, password=self.Network_remote_password)
+        ssh.exec_command(" ".join(cmds["remote"]))
+        time.sleep(5)
 
-    	#round of analyzing for the network output
-    	network_info = { "conn_0": { "normalizer": 1024.0,
-    				   "weight": 1
-    				 },
-    		       "conn_1": { "normalizer": 1024.0,
-    			  	   "weight": 1
-    			  	 }
-    		     }
-    	network_create_score_dict = lambda x: {"conn_%s" % num: x["connections"][conn]["bandwidth_mb/sec"] for conn, num in zip(x["connections"], range(len(x["connections"])) )}
-    	self.network_analyzer = bench_analyzer(network_info, network_create_score_dict, json_data=network_data)
+        #Run the local command
+        output = self.run_command(cmds["local"])
+        network_data = network_parser(output)
+
+        #round of analyzing for the network output
+        network_info = { "conn_0": 
+                            { 
+                                "normalizer": 1024.0,
+    				            "weight": 1
+    				        },
+    		              "conn_1": 
+                            {
+                                "normalizer": 1024.0,
+                                "weight": 1
+                            }
+                        }
+        network_create_score_dict = lambda x: {"conn_%s" % num: x["connections"][conn]["bandwidth_mb/sec"] for conn, num in zip(x["connections"], range(len(x["connections"])) )}
+        self.network_analyzer = bench_analyzer(network_info, network_create_score_dict, json_data=network_data)
         #--------------------------------------------------
 
-    	#--------------------Overall Score------------------
-    	#Get scores for each type of test and put them together as the overall score
-    	overall_info = { "unixbench": { "normalizer": 100.0,
-    					"weight": 1
-    				      },
-    			 "filebench": { "normalizer": 100.0,
-    			   		"weight": 1
-    			   	      },
-    			 "iperf":     { "normalizer": 100.0,
-    			   		"weight": 1
-    			   	      }
-    			}
-    	overall_create_score_dict = lambda x: {key:val for key,val in x.iteritems()}
-    	overall_data = { "unixbench": self.cpu_analyzer.json_data["overall_score"], 
-    			 "filebench": self.io_analyzer.json_data["overall_score"],
-    			 "iperf": self.network_analyzer.json_data["overall_score"]
-    		       }
-    	self.overall_analyzer = bench_analyzer(overall_info, overall_create_score_dict, json_data=overall_data)
-
+        #--------------------Overall Score------------------
+        #Get scores for each type of test and put them together as the overall score
+        overall_info = { 
+                            "unixbench": 
+                            { 
+                                "normalizer": 100.0,
+                                "weight": 1
+                            },
+                            "filebench":
+                            {
+                                "normalizer": 100.0,
+                                "weight": 1
+                            },
+                            "iperf":
+                            {
+                                "normalizer": 100.0,
+                                "weight": 1
+                            }
+                        }
+        overall_create_score_dict = lambda x: {key:val for key,val in x.iteritems()}
+        overall_data = { "unixbench": self.cpu_analyzer.json_data["overall_score"],
+                         "filebench": self.io_analyzer.json_data["overall_score"],
+                         "iperf": self.network_analyzer.json_data["overall_score"]
+                        }
+        self.overall_analyzer = bench_analyzer(overall_info, overall_create_score_dict, json_data=overall_data)
+    
     def view(self):
         view = View('primitives.html',
                     {"overall_score": int(self.overall_analyzer.json_data["overall_score"]),

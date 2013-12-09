@@ -3,7 +3,7 @@ import json
 
 class bench_parser(dict):
     def __init__(self, lines):
-	super(bench_parser, self).__init__(self.parse(lines))
+        super(bench_parser, self).__init__(self.parse(lines))
 
     @classmethod
     def _get_json_from_file(self, file_name):
@@ -14,9 +14,9 @@ class bench_parser(dict):
         '''
         data_json = []
         with open(file_name, 'r') as data_file:
-	    try:
-                data_json = json.load(data_file)
-	    except ValueError, e:
+        try:
+            data_json = json.load(data_file)
+        except ValueError, e:
             pass
         return data_json
 
