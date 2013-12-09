@@ -1,10 +1,12 @@
 import string
 
+
 class View(str):
     """
     Creates a view by reading in a view file and mapping in content
     using python string templating.
     """
+
     def __new__(self, location, mapping=None):
         """
         Reads in the file at view<location>

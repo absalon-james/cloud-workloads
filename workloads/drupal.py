@@ -2,6 +2,7 @@ from common.gatling.stats import Stats
 from common.gatling.workload import Workload as GatlingWorkload
 from common.view import View
 
+
 class Workload(GatlingWorkload):
     """
     Class that handles a drupal cloud workload.
@@ -40,10 +41,10 @@ class Workload(GatlingWorkload):
             'mean_response_time': iteration.mean_response_time,
             'requests_per_second_plot': stats.requests_per_second_plot,
             'active_sessions_per_second_plot': stats.sessions_per_second_plot,
-            'response_times_plot': stats.response_times_plot            
+            'response_times_plot': stats.response_times_plot
         })
 
         return view
-        
+
 if __name__ == '__main__':
     Workload().run()
