@@ -10,6 +10,6 @@ scripts assuming workloads are already installed and configured for use.
 
 required modules
 ================
-paramiko
-json
+paramiko,
+json,
 parse
