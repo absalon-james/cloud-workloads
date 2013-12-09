@@ -7,7 +7,7 @@ class bench_parser(dict):
 
     @classmethod
     def _get_json_from_file(self, file_name):
-	'''
+        '''
         Reads the file into a JSON object.
         If file doesn't exist or is empty [] is returned
         If bad JSON given error is thrown
@@ -17,31 +17,31 @@ class bench_parser(dict):
 	    try:
                 data_json = json.load(data_file)
 	    except ValueError, e:
-		pass
+            pass
         return data_json
 
 class trial_parser(bench_parser):
     @classmethod
     def parse(self, lines):
-	return {'a': 1, 'b': 2}
+        return {'a': 1, 'b': 2}
 
 class cpu_parser(bench_parser):
     unixbench_json_file_tag = "JSON_FILE:"
 
     @classmethod
     def parse(self, lines):
-	for line in lines:
-	    if line.startswith(self.unixbench_json_file_tag):
-	        json_data_file = line.split()[1]
-		return self._get_json_from_file(json_data_file)
-	return None
+        for line in lines:
+            if line.startswith(self.unixbench_json_file_tag):
+                json_data_file = line.split()[1]
+                return self._get_json_from_file(json_data_file)
+        return None
 
 class io_parser(bench_parser):
     filebench_summary_tag = "IO Summary:"
-    
+
     def __init__(self):
-	super(bench_parser, self).__init__()
-    	
+        super(bench_parser, self).__init__()
+
     def parse(self, cmd, lines):
         for line in lines:
             if self.filebench_summary_tag in line:
@@ -52,7 +52,7 @@ class io_parser(bench_parser):
 class network_parser(bench_parser):
 
     def parse(self, lines):
-	iperf_data = {"window_sizes": [], "connections": {}}
+        iperf_data = {"window_sizes": [], "connections": {}}
         for line in lines:
             words = line.split()
             if (words[0] == "TCP"):
@@ -68,7 +68,7 @@ class network_parser(bench_parser):
                     iperf_data["connections"][conn_num]["transfer_mb"] = words[4]
                     iperf_data["connections"][conn_num]["bandwidth_mb/sec"] = words[6]
 
-	return iperf_data
+        return iperf_data
 
 
 

@@ -16,9 +16,8 @@ class Workload(BaseWorkload):
     """
     Class that handles a Primitive cloud workload.
     """
-
     def __init__(self):
-	self.is_primitive = True
+        self.is_primitive = True
         self._iterations = []
         self._config()
 
@@ -32,7 +31,6 @@ class Workload(BaseWorkload):
         conf_file = 'config/primitives.ini'
 
         parser = ConfigParser.ConfigParser()
-
         parser.add_section("Primitives")
         parser.set("Primitives", "bench_location", "~")
 
@@ -58,12 +56,11 @@ class Workload(BaseWorkload):
         parser.set("Network", "remote_key", "~/.ssh/id_rsa")
 
         parser.read(conf_file)
-        
+
         CPU_tests = parser.get("CPU", "tests_to_run").split(",")
         IO_tests = parser.get("IO", "tests_to_run").split(",")
 
         self._conf.update(Primitives_bench_location=parser.get("Primitives", "bench_location"))
-        
         self._conf.update(CPU_tests=CPU_tests)
         self._conf.update(CPU_directory=parser.get("CPU", "directory"))
         self._conf.update(CPU_iterations_per_test=parser.get("CPU", "iterations_per_test"))
@@ -82,7 +79,7 @@ class Workload(BaseWorkload):
     def name(self):
         """
         Returns name of the workload.
-    
+
         :returns: String name of the workload
         """
         return "Primitives"
@@ -245,34 +242,33 @@ class Workload(BaseWorkload):
         return {"remote": [script, '-s'], "local": [script, '-c', self.Network_remote_host, "-d"]}
 
     def run_command(self, cmd):
-	"""
-	Runs the given command and provides the output
-	
-	:returns: cStringIO object
-	"""
-	process = subprocess.Popen(cmd, stdout=subprocess.PIPE)
-        output, err = process.communicate()
-        return cStringIO.StringIO(output)
+    	"""
+    	Runs the given command and provides the output
+    	
+    	:returns: cStringIO object
+    	"""
+    	process = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+            output, err = process.communicate()
+            return cStringIO.StringIO(output)
 
     def run(self):
         """
         Runs the Primitive workload
         """
-    	
+
         #--------------------CPU CMD--------------------
         #need to change to UnixBench directory
-	orig_dir = os.getcwd()
-	os.chdir(os.path.join(self.Primitives_bench_location, self.CPU_directory))
-	
-	#run the UnixBench command and parse the output
+        orig_dir = os.getcwd()
+        os.chdir(os.path.join(self.Primitives_bench_location, self.CPU_directory))
+
+        #run the UnixBench command and parse the output
         cmd = self.CPU_command()
-	output = self.run_command(cmd)
-	cpu_data = cpu_parser(output)
-        
-	os.chdir(orig_dir)
-	
-	#take output and analyze it. Basically take weighted averages of results
-    	ub_info = {"dhry2reg": 
+        output = self.run_command(cmd)
+        cpu_data = cpu_parser(output)
+        os.chdir(orig_dir)
+
+        #take output and analyze it. Basically take weighted averages of results
+        ub_info = {"dhry2reg": 
                     {
                         "normalizer": 119342529.0,
                         "weight": 1
@@ -283,82 +279,83 @@ class Workload(BaseWorkload):
         #------------------------------------------------
 	
         #--------------------IO CMD------------------------
-	#Grab list of commands we're going to run and initialize the io parser
+        #Grab list of commands we're going to run and initialize the io parser
         cmds = self.IO_commands()
         fb_data = io_parser()
 
-	#run commands and add outptu to parser as we go
+        #run commands and add outptu to parser as we go
         for cmd in cmds:
-	    output = self.run_command(cmd)
-	    fb_data.parse(cmd, output)
+            output = self.run_command(cmd)
+        fb_data.parse(cmd, output)
 
-	#analyze results. as before this is essentially a weighted average
-	fb_info = { "randomrw.f": { 
-				    "normalizer": 60.0,
-				    "weight": 1
-			    }
-		  }
+    	#analyze results. as before this is essentially a weighted average
+    	fb_info = { "randomrw.f": { 
+    				    "normalizer": 60.0,
+    				    "weight": 1
+    			    }
+    		  }
         fb_create_score_dict = lambda x: {key:val for key,val in x.iteritems()}
         self.io_analyzer = bench_analyzer(fb_info, fb_create_score_dict, json_data=fb_data)
         #--------------------------------------------------
 
         #--------------------NET CMD------------------------
-	#Get the local and remote commands that we'll need to run
-	cmds = self.Network_commands()
-	#Use paramiko to run the remote command then sleep for a few seconds to let the server spin up
-	ssh = paramiko.SSHClient()
-	ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-	ssh.connect(self.Network_remote_host, username=self.Network_remote_user, password=self.Network_remote_password)
-	ssh.exec_command(" ".join(cmds["remote"]))
-	time.sleep(5)
-	
-	#Run the local command
-	output = self.run_command(cmds["local"])
-	network_data = network_parser(output)
+    	#Get the local and remote commands that we'll need to run
+    	cmds = self.Network_commands()
+    	#Use paramiko to run the remote command then sleep for a few seconds to let the server spin up
+    	ssh = paramiko.SSHClient()
+    	ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    	ssh.connect(self.Network_remote_host, username=self.Network_remote_user, password=self.Network_remote_password)
+    	ssh.exec_command(" ".join(cmds["remote"]))
+    	time.sleep(5)
+    	
+    	#Run the local command
+    	output = self.run_command(cmds["local"])
+    	network_data = network_parser(output)
 
-	#round of analyzing for the network output
-	network_info = { "conn_0": { "normalizer": 1024.0,
-				   "weight": 1
-				 },
-		       "conn_1": { "normalizer": 1024.0,
-			  	   "weight": 1
-			  	 }
-		     }
-	network_create_score_dict = lambda x: {"conn_%s" % num: x["connections"][conn]["bandwidth_mb/sec"] for conn, num in zip(x["connections"], range(len(x["connections"])) )}
-	self.network_analyzer = bench_analyzer(network_info, network_create_score_dict, json_data=network_data)
+    	#round of analyzing for the network output
+    	network_info = { "conn_0": { "normalizer": 1024.0,
+    				   "weight": 1
+    				 },
+    		       "conn_1": { "normalizer": 1024.0,
+    			  	   "weight": 1
+    			  	 }
+    		     }
+    	network_create_score_dict = lambda x: {"conn_%s" % num: x["connections"][conn]["bandwidth_mb/sec"] for conn, num in zip(x["connections"], range(len(x["connections"])) )}
+    	self.network_analyzer = bench_analyzer(network_info, network_create_score_dict, json_data=network_data)
         #--------------------------------------------------
 
-	#--------------------Overall Score------------------
-	#Get scores for each type of test and put them together as the overall score
-	overall_info = { "unixbench": { "normalizer": 100.0,
-					"weight": 1
-				      },
-			 "filebench": { "normalizer": 100.0,
-			   		"weight": 1
-			   	      },
-			 "iperf":     { "normalizer": 100.0,
-			   		"weight": 1
-			   	      }
-			}
-	overall_create_score_dict = lambda x: {key:val for key,val in x.iteritems()}
-	overall_data = { "unixbench": self.cpu_analyzer.json_data["overall_score"], 
-			 "filebench": self.io_analyzer.json_data["overall_score"],
-			 "iperf": self.network_analyzer.json_data["overall_score"]
-		       }
-	self.overall_analyzer = bench_analyzer(overall_info, overall_create_score_dict, json_data=overall_data)
+    	#--------------------Overall Score------------------
+    	#Get scores for each type of test and put them together as the overall score
+    	overall_info = { "unixbench": { "normalizer": 100.0,
+    					"weight": 1
+    				      },
+    			 "filebench": { "normalizer": 100.0,
+    			   		"weight": 1
+    			   	      },
+    			 "iperf":     { "normalizer": 100.0,
+    			   		"weight": 1
+    			   	      }
+    			}
+    	overall_create_score_dict = lambda x: {key:val for key,val in x.iteritems()}
+    	overall_data = { "unixbench": self.cpu_analyzer.json_data["overall_score"], 
+    			 "filebench": self.io_analyzer.json_data["overall_score"],
+    			 "iperf": self.network_analyzer.json_data["overall_score"]
+    		       }
+    	self.overall_analyzer = bench_analyzer(overall_info, overall_create_score_dict, json_data=overall_data)
 
     def view(self):
-	view = View('primitives.html', 
-		    {	"overall_score": int(self.overall_analyzer.json_data["overall_score"]),
-			"cpu_score": int(self.cpu_analyzer.json_data["overall_score"]),
-			"io_score": int(self.io_analyzer.json_data["overall_score"]),
-			"network_score": int(self.network_analyzer.json_data["overall_score"]),
-			"overall_breakdown": self.overall_analyzer.breakdown,
-			"cpu_breakdown": self.cpu_analyzer.breakdown,
-			"io_breakdown": self.io_analyzer.breakdown,
-			"network_breakdown": self.network_analyzer.breakdown,
-		    })
-	return view
+        view = View('primitives.html',
+                    {"overall_score": int(self.overall_analyzer.json_data["overall_score"]),
+                     "cpu_score": int(self.cpu_analyzer.json_data["overall_score"]),
+                     "io_score": int(self.io_analyzer.json_data["overall_score"]),
+                     "network_score": int(self.network_analyzer.json_data["overall_score"]),
+                     "overall_breakdown": self.overall_analyzer.breakdown,
+                     "cpu_breakdown": self.cpu_analyzer.breakdown,
+                     "io_breakdown": self.io_analyzer.breakdown,
+                     "network_breakdown": self.network_analyzer.breakdown,
+                    }
+                )
+        return view
 
 if __name__ == '__main__':
     Workload().run()
