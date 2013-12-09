@@ -27,18 +27,19 @@ class bench_analyzer(object):
         #dictionary of all the available scores from the json ex. {"test_name": 4000.0}
         self.score_dict = create_score_dict(self.json_data)
         #create string with html for the table and rows of the breakdown
-	breakdown_table_rows = ["<tr> \
-				    <td class=\"breakdown\">%s</td> \
-				    <td class=\"breakdown\">%s</td> \
-				    <td class=\"breakdown\">%s</td> \
+	
+	breakdown_table_rows = ["<tr> \n\
+				    <td class=\"breakdown\">%s</td> \n\
+				    <td class=\"breakdown\">%s</td> \n\
+				    <td class=\"breakdown\">%s</td> \n\
 				</tr>\n" % (key, val["weight"], val["normalizer"]) for key,val in score_info.iteritems() ]
-	breakdown_table = "<table> \
-				<tr> \
-				    <td class=\"breakdown\">Input Label</td> \
-				    <td class=\"breakdown\">Weight</td> \
-				    <td class=\"breakdown\">Highest Score</td> \
-				</tr> \
-				%s \
+	breakdown_table = "<table> \n\
+				<tr> \n\
+				    <td class=\"breakdown\">Input Label</td> \n\
+				    <td class=\"breakdown\">Weight</td> \n\
+				    <td class=\"breakdown\">Highest Score</td> \n\
+				</tr> \n\
+				%s \n\
 			   </table>" % "".join( breakdown_table_rows )
 	self.breakdown = breakdown_table
 	

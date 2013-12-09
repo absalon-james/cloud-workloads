@@ -1,7 +1,11 @@
 import parser
 import json
 
-class parser(object):
+class bench_parser(dict):
+    def __init__(self, lines):
+	super(bench_parser, self).__init__(self.parse(lines))
+
+    @classmethod
     def _get_json_from_file(self, file_name):
 	'''
         Reads the file into a JSON object.
@@ -16,29 +20,38 @@ class parser(object):
 		pass
         return data_json
 
-class cpu_parser(parser):
+class trial_parser(bench_parser):
+    @classmethod
+    def parse(self, lines):
+	return {'a': 1, 'b': 2}
+
+class cpu_parser(bench_parser):
     unixbench_json_file_tag = "JSON_FILE:"
 
+    @classmethod
     def parse(self, lines):
-	for line in lines
+	for line in lines:
 	    if line.startswith(self.unixbench_json_file_tag):
 	        json_data_file = line.split()[1]
 		return self._get_json_from_file(json_data_file)
 	return None
 
-class io_parser(parser):
-
-    def parse(self, lines):
-	for line in lines:
+class io_parser(bench_parser):
+    filebench_summary_tag = "IO Summary:"
+    
+    def __init__(self):
+	super(bench_parser, self).__init__()
+    	
+    def parse(self, cmd, lines):
+        for line in lines:
             if self.filebench_summary_tag in line:
                 mbps = line.split(", ")[-3].replace("mb/s", "")
                 test_name = cmd[-1].split("/")[-1]
-                fb_data[test_name] = float(mbps)
+                self[test_name] = float(mbps)
 
+class network_parser(bench_parser):
 
-class network_parser(parser):
-
-    def parser(self, lines):
+    def parse(self, lines):
 	iperf_data = {"window_sizes": [], "connections": {}}
         for line in lines:
             words = line.split()
@@ -54,6 +67,8 @@ class network_parser(parser):
                     iperf_data["connections"][conn_num]["interval_stop"] = interval_list[1]
                     iperf_data["connections"][conn_num]["transfer_mb"] = words[4]
                     iperf_data["connections"][conn_num]["bandwidth_mb/sec"] = words[6]
+
+	return iperf_data
 
 
 
