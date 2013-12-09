@@ -24,7 +24,7 @@ class Runner(object):
             print ("---- Running workload %s " % instance.name).ljust(80, '-')
             print "-".ljust(80, '-')
             instance.run()
-	    if (instance.is_primitive):
+        if (instance.is_primitive):
             self.primitives = instance
         else:
             self.instances.append(instance)

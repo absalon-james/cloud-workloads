@@ -75,4 +75,5 @@ class bench_analyzer(object):
                             for val in self.score_info.values()])
         self.json_data["overall_score"] = self._avg(
             weighted_normal_scores_list, weight_total)
+        self.overall_score = self.json_data["overall_score"]
         self.json_data["status"] = "Success"
