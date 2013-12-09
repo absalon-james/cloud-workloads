@@ -242,12 +242,12 @@ class Workload(BaseWorkload):
         return {"remote": [script, '-s'], "local": [script, '-c', self.Network_remote_host, "-d"]}
 
     def run_command(self, cmd):
-    	"""
-    	Runs the given command and provides the output
-    	
-    	:returns: cStringIO object
-    	"""
-    	process = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+        """
+        Runs the given command and provides the output
+
+        :returns: cStringIO object
+        """
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE)
             output, err = process.communicate()
             return cStringIO.StringIO(output)
 

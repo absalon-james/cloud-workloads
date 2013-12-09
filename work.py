@@ -1,5 +1,6 @@
 from common.view import View
 
+
 class Runner(object):
 
     def __init__(self, workloads):
@@ -16,9 +17,9 @@ class Runner(object):
             print "-".ljust(80, '-')
             instance.run()
 	    if (instance.is_primitive):
-		self.primitives = instance
-	    else:
-	        self.instances.append(instance)
+            self.primitives = instance
+        else:
+            self.instances.append(instance)
 
     def view(self):        
         mapping = { 
