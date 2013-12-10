@@ -1,0 +1,63 @@
+<fieldset id="scores">
+<script type="text/javascript">
+function display_breakdown(score_type) {
+    var my_labels=["Overall-breakdown", "CPU-breakdown", "IO-breakdown", "Network-breakdown"];
+    for(var i = 0; i < my_labels.length; i++) 
+    {
+            $$("#"+my_labels[i]).css("display", "none");
+    }
+    var id=score_type.concat("-breakdown");
+    $$("#"+id).css("display", "block");
+    $$("#breakdown-legend").html(score_type+" Breakdown");
+}
+</script>
+<legend>Your Score</legend>
+    <div id="scores-chart">
+        <table>
+        <tr>
+            <td class="score overall" rowspan="3" id="primitives-overall" onMouseover="display_breakdown('Overall')">${overall_score}</td>
+            <td class="label individual" onMouseover="display_breakdown('CPU')">CPU</td>
+            <td class="score individual" id="primitives-cpu" onMouseover="display_breakdown('CPU')">${cpu_score}</td>
+        </tr>
+        <tr onMouseover="display_breakdown('IO')">
+            <td class="label individual">IO</td>
+            <td class="score individual" id="primitives-io">${io_score}</td>
+        </tr>
+        <tr onMouseover="display_breakdown('Network')">
+            <td class="label individual">Network</td>
+            <td class="score individual" id="primitives-network">${network_score}</td>
+        </tr>
+        </table>
+
+        </br>
+        <legend class="breakdown" id="breakdown-legend">Score Breakdown</legend>
+        <div class="breakdown" id="Overall-breakdown" style="display:none">
+            <!--<table><tr><td>{overall_breakdown}</td</tr></table>-->
+	    ${overall_breakdown}
+        </div>
+        <div class="breakdown" id="CPU-breakdown" style="display:none">
+            <!--<table><tr><td>{cpu_breakdown}</td</tr></table>-->
+	    ${cpu_breakdown}
+        </div>
+        <div class="breakdown" id="IO-breakdown" style="display:none">
+            <!--<table><tr><td>{io_breakdown}</td</tr></table>-->
+	    ${io_breakdown}
+        </div>
+        <div class="breakdown" id="Network-breakdown" style="display:none">
+            <!--<table><tr><td>{network_breakdown}</td</tr></table>-->
+	    ${network_breakdown}
+        </div>
+    </div>
+
+    <div id="scores-explanation">
+        <h3>What does this mean?</h3>
+        <p> The primitive benchmarks assess the performance of common low level operations.
+            After the benchmarks are run the pertinent data is normalized and aggregated
+            using an algorithm based on weighted averages.
+            This aggregation produces a single number for each type of benchmark
+            representing the score of that benchmark. These individual scores are then
+            combined to produce the final score for all of the primitive benchmarks. The
+            types of benchmarks included test the performance of CPU, disk and network
+            operations. More specifically unixbench, filebench and iperf are used.</p>
+    </div>            
+</fieldset>
