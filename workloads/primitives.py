@@ -301,7 +301,6 @@ class Workload(BaseWorkload):
         self.cpu_analyzer = bench_analyzer(ub_info,
                                            ub_create_score_dict,
                                            json_data=cpu_data)
-        #------------------------------------------------
 
         #--------------------IO CMD------------------------
         #Grab list of commands we're going to run and initialize the io parser
@@ -326,7 +325,6 @@ class Workload(BaseWorkload):
         self.io_analyzer = bench_analyzer(fb_info,
                                           fb_create_score_dict,
                                           json_data=fb_data)
-        #--------------------------------------------------
 
         #--------------------NET CMD------------------------
         #Get the local and remote commands that we'll need to run
@@ -367,7 +365,6 @@ class Workload(BaseWorkload):
         self.network_analyzer = bench_analyzer(network_info,
                                                network_create_score_dict,
                                                json_data=network_data)
-        #--------------------------------------------------
 
         #--------------------Overall Score------------------
         #Get scores for each type of test and put them together
