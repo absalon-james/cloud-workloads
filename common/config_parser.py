@@ -9,7 +9,7 @@ class ConfigParser(BaseParser, object):
         if mode == "salt":
             self.read = self.read_salt
 
-    def read_salt(self, config_key):
+    def read_salt(self, config_file):
         '''
         Reads config values from the salt grains/pillars.
         This must be run on the minion as it uses salt.client.Caller().
