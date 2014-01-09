@@ -1,4 +1,4 @@
-import ConfigParser
+#import ConfigParser
 import cStringIO
 import json
 import os
@@ -10,13 +10,15 @@ from common.primitives.bench_analyzer import bench_analyzer
 from common.primitives.parser import io_parser, cpu_parser, network_parser
 from common.view import View
 from common.workload import Workload as BaseWorkload
+import common.config_parser as ConfigParser
 
 
 class Workload(BaseWorkload):
     """
     Class that handles a Primitive cloud workload.
     """
-    def __init__(self):
+    def __init__(self, config_mode="flat_file"):
+        self.config_mode = config_mode
         self.is_primitive = True
         self._iterations = []
         self._config()
@@ -30,7 +32,7 @@ class Workload(BaseWorkload):
         self._conf = {}
         conf_file = 'config/primitives.ini'
 
-        parser = ConfigParser.ConfigParser()
+        parser = ConfigParser.ConfigParser(self.config_mode)
         parser.add_section("Primitives")
         parser.set("Primitives", "bench_location", "~")
 

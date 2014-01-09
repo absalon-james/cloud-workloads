@@ -1,7 +1,8 @@
 import cStringIO
-import ConfigParser
+#import ConfigParser
 import os
 import subprocess
+import common.config_parser as ConfigParser
 
 from common.workload import Workload as BaseWorkload
 from iteration import Iteration
@@ -13,7 +14,8 @@ class Workload(BaseWorkload):
     Class that handles a Gatling cloud workload.
     """
 
-    def __init__(self):
+    def __init__(self, config_mode="flat_file"):
+        self.config_mode = config_mode
         self._iterations = []
         self._config()
 
@@ -25,7 +27,7 @@ class Workload(BaseWorkload):
         """
         self._conf = {}
 
-        parser = ConfigParser.ConfigParser()
+        parser = ConfigParser.ConfigParser(self.config_mode)
 
         # Default webheads
         parser.add_section("webheads")

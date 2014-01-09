@@ -68,7 +68,7 @@ class bench_analyzer(object):
                     <td class=\"breakdown\">%s</td> \n\
                     <td class=\"breakdown\">%s</td> \n\
                     </tr>\n" % (test_name, val["weight"],
-                                int(normal_scores[test_name])
+                                int(normal_scores[test_name]))
                                 for test_name, val in self.score_info.iteritems()]
 
         return "<table> \n\
