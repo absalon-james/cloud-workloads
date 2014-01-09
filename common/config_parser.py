@@ -1,6 +1,6 @@
-from ConfigParser import ConfigParser as BaseParser
 import os
 import json
+from ConfigParser import ConfigParser as BaseParser
 
 class ConfigParser(BaseParser, object):
 
@@ -9,7 +9,7 @@ class ConfigParser(BaseParser, object):
         if mode == "salt":
             self.read = self.read_salt
 
-    def read_salt(self, config_file):
+    def read_salt(self, config_key):
         '''
         Reads config values from the salt grains/pillars.
         This must be run on the minion as it uses salt.client.Caller().
@@ -25,8 +25,10 @@ class ConfigParser(BaseParser, object):
 
         caller = salt.client.Caller()
         grain_dict = caller.function('grains.items')
+        
+        workload_name = os.path.splitext(os.path.basename(config_file))
 
-        workload_config = grain_dict["workload_config"]
+        workload_config = grain_dict["workload_config"][workload_name]
 
         for section in workload_config:
             for key,val in workload_config[section].items():
