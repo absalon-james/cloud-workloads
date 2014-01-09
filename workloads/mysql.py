@@ -1,7 +1,9 @@
-import ConfigParser
+#import ConfigParser
 import cStringIO
 import os
 import subprocess
+import common.config_parser as ConfigParser
+
 from common.workload import Workload as BaseWorkload
 from common.view import View
 
@@ -65,7 +67,8 @@ class Workload(BaseWorkload):
     Class that handles a MySQL workload.
     """
 
-    def __init__(self):
+    def __init__(self, config_mode="flat_file"):
+        self.config_mode = config_mode
         self._iterations = []
         self._config()
 
@@ -77,7 +80,7 @@ class Workload(BaseWorkload):
         """
         self._conf = {}
 
-        parser = ConfigParser.ConfigParser()
+        parser = ConfigParser.ConfigParser(self.config_mode)
 
         parser.add_section('host')
         parser.set('host', 'host', '127.0.0.1')

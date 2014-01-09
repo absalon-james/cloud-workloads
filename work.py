@@ -7,27 +7,28 @@ class Runner(object):
     a combined view.
     """
 
-    def __init__(self, workloads):
+    def __init__(self, workloads, config_mode="flat_file"):
         """
         Inits the runner
 
         :param workloads: List of workload classes to run.
         """
         self.workloads = workloads
+        self.config_mode = config_mode
         self.instances = []
 
     def run(self):
         """ Runs each workload """
         for workload in self.workloads:
-            instance = workload()
+            instance = workload(self.config_mode)
             print "-".ljust(80, '-')
             print ("---- Running workload %s " % instance.name).ljust(80, '-')
             print "-".ljust(80, '-')
             instance.run()
-        if (instance.is_primitive):
-            self.primitives = instance
-        else:
-            self.instances.append(instance)
+            if (instance.is_primitive):
+                self.primitives = instance
+            else:
+                self.instances.append(instance)
 
     def view(self):
         """
@@ -87,13 +88,19 @@ if __name__ == "__main__":
     import ConfigParser
 
     parser = ConfigParser.ConfigParser()
+
+    parser.add_section("config_mode")
+    parser.set("config_mode", "mode", "flat_file")
+    
     parser.add_section("loads")
     parser.read("config/conf.ini")
+
+    config_mode = parser.get("config_mode", "mode")
 
     loads = [load for key, load in parser.items("loads")]
 
     classes = load_workload_classes(loads)
-    runner = Runner(classes)
+    runner = Runner(classes, config_mode)
     runner.run()
     with open("index.html", "w") as outfile:
         outfile.write(runner.view())
