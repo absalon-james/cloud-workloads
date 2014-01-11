@@ -276,7 +276,6 @@ class Workload(BaseWorkload):
         """
         Runs the Primitive workload
         """
-
         #--------------------CPU CMD--------------------
         #need to change to UnixBench directory
         orig_dir = os.getcwd()
@@ -312,7 +311,7 @@ class Workload(BaseWorkload):
         #run commands and add outptu to parser as we go
         for cmd in cmds:
             output = self.run_command(cmd)
-        fb_data.parse(cmd, output)
+            fb_data.parse(cmd, output)
 
         #analyze results. as before this is essentially a weighted average
         fb_info = {
