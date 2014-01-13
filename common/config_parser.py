@@ -14,14 +14,11 @@ class ConfigParser(BaseParser, object):
         '''
         Reads config values from the salt grains/pillars.
         This must be run on the minion as it uses salt.client.Caller().
-        If the mode is not salt this method isn't applied.
+        If the mode is not salt a regular read is performed.
 
         :param conf_file: String name of configuration file.
                           This is not used here but needs to be included
                           for when config_mode is flat_file
-
-        TODO: decide what things should be done in grains vs pillars
-              FIGURE OUT WHAT IS THROWN BY ORIG_READ WHEN FILE DOESN'T EXIST
         '''
         import salt.config
 
