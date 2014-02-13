@@ -4,7 +4,8 @@ import os
 import subprocess
 
 from common.workload import Workload as BaseWorkload
-from iteration import Iteration
+
+from result import GatlingStdoutParser, GatlingResult
 from stats import Stats
 
 
@@ -13,43 +14,19 @@ class Workload(BaseWorkload):
     Class that handles a Gatling cloud workload.
     """
 
-    def __init__(self):
-        self._iterations = []
-        self._config()
-
-    def _config(self, conf_file):
+    def __init__(self, client, pool, config):
         """
-        Loads necessary configuration values for this workload.
+        Inits the workload. Needs a salt local client, minion pool and
+        a configuration dictionary
 
-        :param conf_file: String name of configuration file.
+        @param client - cloud_workloads.remote.client.Client
+        @param pool - cloud_workloads.remote.pool.MinionPool
+        @param config - dict
+
         """
-        self._conf = {}
-
-        parser = ConfigParser.ConfigParser()
-
-        # Default webheads
-        parser.add_section("webheads")
-        parser.set("webheads", "web1", "http://127.0.0.1")
-        parser.set("webheads", "web2", "http://127.0.0.1")
-
-        # Default run parameters
-        parser.add_section("run")
-        parser.set("run", "duration", "180")
-        parser.set("run", "users_start", "500")
-        parser.set("run", "users_step", "500")
-
-        # Default gatling parameters
-        parser.add_section("gatling")
-        parser.set("gatling", "path", "~/gatling")
-
-        parser.read(conf_file)
-
-        webheads = [webhead for key, webhead in parser.items("webheads")]
-        self._conf.update(webheads=webheads)
-        self._conf.update(duration=parser.get("run", "duration"))
-        self._conf.update(users_start=parser.get("run", "users_start"))
-        self._conf.update(users_step=parser.get("run", "users_step"))
-        self._conf.update(gatling_path=parser.get("gatling", "path"))
+        super(Workload, self).__init__(client, pool, config)
+        self._results = []
+        self.webheads = None
 
     @property
     def name(self):
@@ -57,6 +34,7 @@ class Workload(BaseWorkload):
         Returns name of the workload.
 
         :returns: String name of the workload
+
         """
         return "Gatling"
 
@@ -67,8 +45,9 @@ class Workload(BaseWorkload):
         Taken from the config.
 
         :returns: Integer starting number of users
+
         """
-        return int(self._conf.get('users_start'))
+        return int(self.config['users_start'])
 
     @property
     def users_step(self):
@@ -78,8 +57,9 @@ class Workload(BaseWorkload):
         Taken from the config.
 
         :returns: Integer number of users per webhead to increase
+
         """
-        return int(self._conf.get('users_step'))
+        return int(self.config['users_step'])
 
     @property
     def duration(self):
@@ -89,31 +69,27 @@ class Workload(BaseWorkload):
         Taken from the config.
 
         :returns:  Integer number of seconds
-        """
-        return int(self._conf.get('duration'))
 
-    @property
-    def webheads(self):
+        """
+        return int(self.config['duration'])
+
+    def get_webheads(self):
         """
         Returns the list of webheads.
         Taken from the config.
 
         :returns: List
+
         """
-        return self._conf.get('webheads')
+        if self.webheads is None:
+            minions = self.minions_with_role(self.config['webhead_role'])
+            ips_dict = self.client.get_ips(minions)
+            self.webheads = [self.config['webhead_url'] % ips[0] for ips in ips_dict.itervalues()]
+
+        return self.webheads
 
     @property
-    def gatling_path(self):
-        """
-        Returns the location to gatling.
-        Taken from the config.
-
-        :returns: String
-        """
-        return self._conf.get('gatling_path')
-
-    @property
-    def best_iteration(self):
+    def best_run(self):
         """
         Returns the second to last iteration if there are more than one.
         The testing stops when an iteration fails.
@@ -123,11 +99,12 @@ class Workload(BaseWorkload):
         Returns None otherwise (test probably hasn't been run yet.
 
         :returns: [GatlingIteration | None]
+
         """
-        if len(self._iterations) > 1:
-            return self._iterations[-2]
-        elif len(self._iterations) > 0:
-            return self._iterations[-1]
+        if len(self._results) > 1:
+            return self._results[-2]
+        elif len(self._results) > 0:
+            return self._results[-1]
         return None
 
     def command(self, simulation):
@@ -137,9 +114,9 @@ class Workload(BaseWorkload):
         :param simulation: String name of simulation scala class
             Example drupal.UserSimulation
         :returns: String
+
         """
-        script = os.path.join(self.gatling_path, 'bin/gatling.sh')
-        return ['/bin/bash', script, '-s', simulation]
+        return 'sh /opt/%s/bin/gatling.sh -s %s' % (self.config['gatling_dir'], simulation)
 
     def env(self, users=None, duration=None, webheads=None):
         """
@@ -149,43 +126,73 @@ class Workload(BaseWorkload):
         :param duration: Number of seconds over which to push the users
         :param webheads: Webheads to hit with users
         :returns: Dictionary of environment
+
         """
         users = users or self.users_start
         duration = duration or self.duration
-        webheads = webheads or ','.join(self.webheads)
-        env = dict(os.environ)
-        env['JAVA_OPTS'] = "-Dusers=%s -Dtime=%s -Dwebheads=%s" % (
-            users, duration, webheads)
-        return env
+        webheads = webheads or ','.join(self.get_webheads())
+        return {
+            'JAVA_OPTS': "-Dusers=%s -Dtime=%s -Dwebheads=%s" %
+                         (users, duration, webheads)
+        }
 
     def run(self):
         """
         Runs the Gatling workload
         Iterates until a stopping condition has been raised.
-        """
 
+        """
         cmd = self.command()
         users = self.users_start
         step = self.users_step
 
+        stdout_parser = GatlingStdoutParser()
+
+        runners = self.minions_with_role(self.config['gatling_role'])
+        timeout = max(2 * self.duration, 360)
+
         while(True):
             env = self.env(users=users)
-            process = subprocess.Popen(cmd, stdout=subprocess.PIPE, env=env)
-            output, err = process.communicate()
-            output = cStringIO.StringIO(output)
-            iteration = Iteration(users, self.duration, self.webheads, output)
-            print iteration
-            self._iterations.append(iteration)
+            kwargs = {
+                'timeout': timeout,
+                'arg': (cmd,),
+                'kwarg': {
+                    'env': env,
+                    'runas': self.config['gatling_user']
+                }
+            }
+
+            # Execution response (still have to make another request to
+            # get the simulation.log file contents)
+            # @TODO expand to handle multi minion return, use only the first for now
+            exe_resp = self.client.cmd(runners[0].id_, 'cmd.run_all', **kwargs).values()[0]
+            retcode = exe_resp.get('retcode')
+            stdout = exe_resp.get('stdout')
+            stderr = exe_resp.get('stderr')
+            stdout = cStringIO.StringIO(stdout)
+
+            result = GatlingResult(users, self.duration, self.webheads)
+            result.update({'retcode': retcode})
+            result.update(stdout_parser.parse(stdout))
+            print result
+
+            # Attempt to get contents of simulation log
+            kwargs = {
+                'timeout': timeout,
+                'arg': ('cat %s' % result.simulation_log,)
+            }
+            log_resp = self.client.cmd(runners[0].id_, 'cmd.run_all', **kwargs).values()[0]
+            stdout = cStringIO.StringIO(log_resp.get('stdout'))
+            stats = Stats()
+            stats.update(stdout)
+            result.update({'stats': stats})
+
+            self._results.append(result)
 
             # Check process codes.
             # 0 = success
             # 2 = Gatling worked but at least one assertion failed
-            if process.returncode not in [0, 2]:
-                # Handle bad codes
-                break
-            if not iteration.success:
+            if retcode not in [0,2] or not result.success:
+                # @TODO handle bad codes
                 break
             users += step
-
-if __name__ == '__main__':
-    Workload().run()
