@@ -1,0 +1,62 @@
+minion_pool:
+  target: '*'
+  expr_form: 'glob'
+
+primitives:
+  workload: primitives
+  instances:
+    - roles:
+        - primitives
+    - roles:
+        - primitives_target
+
+standard_hadoop:
+  workload: hadoop
+  instances:
+    - roles:
+        - hadoop_master
+    - roles:
+        - hadoop_slave
+
+standard_mysql:
+  connections: 20
+  mindelta: 250
+  duration: 90
+  first_warehouse: 1
+  last_warehouse: 1
+  workload: mysql
+  instances:
+    - roles:
+        - dbt2_db
+    - roles:
+        - dbt2
+
+standard_magento:
+  workload: magento
+  duration: 30
+  users_start: 10 
+  users_step: 10
+  instances:
+    - roles:
+        - magento_mysql_master
+    - roles:
+        - magento_mysql_slave
+    - roles:
+        - magento_web
+    - roles:
+        - magento_gatling
+
+standard_drupal:
+  workload: drupal
+  duration: 30
+  users_start: 500
+  users_step: 200
+  instances:
+    - roles:
+        - drupal_mysql_master
+    - roles:
+        - drupal_mysql_slave
+    - roles:
+        - drupal_web
+    - roles:
+        - drupal_gatling

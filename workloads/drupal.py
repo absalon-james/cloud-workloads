@@ -8,11 +8,30 @@ class Workload(GatlingWorkload):
     Class that handles a drupal cloud workload.
     """
 
-    def _config(self):
-        """
-        Loads necessary configuration values for this workload.
-        """
-        super(Workload, self)._config("config/drupal.ini")
+    DEFAULT_STATES = {
+        'drupal_mysql_master': ['drupal.db_master'],
+        'drupal_mysql_slave': ['drupal.db_slave'],
+        'drupal_web': ['drupal.web'],
+        'drupal_gatling': ['drupal.gatling']
+    }
+
+    DEFAULT_ANTI_STATES = {
+        'drupal_mysql_master': ['drupal.antidb_master'],
+        'drupal_mysql_slave': ['drupal.antidb_slave'],
+        'drupal_web': ['drupal.antiweb'],
+        'drupal_gatling': ['drupal.antigatling']
+    }
+
+    DEFAULT_CONFIG = {
+        'gatling_dir': 'gatling',
+        'webhead_url': 'http://%s',
+        'webhead_role': 'drupal_web',
+        'gatling_role': 'drupal_gatling',
+        'gatling_user': 'gatling',
+        'duration': '20',
+        'users_start': '20',
+        'users_step': '25'
+    }
 
     @property
     def name(self):
@@ -31,17 +50,17 @@ class Workload(GatlingWorkload):
         """
         return super(Workload, self).command('drupal.UserSimulation')
 
+
     def view(self):
-        iteration = self.best_iteration
-        stats = Stats(iteration)
+        run = self.best_run
 
         view = View('drupal.html', {
-            'users': iteration.users,
-            'duration': iteration.duration,
-            'mean_response_time': iteration.mean_response_time,
-            'requests_per_second_plot': stats.requests_per_second_plot,
-            'active_sessions_per_second_plot': stats.sessions_per_second_plot,
-            'response_times_plot': stats.response_times_plot
+            'users': run.users,
+            'duration': run.duration,
+            'mean_response_time': run.mean_response_time,
+            'requests_per_second_plot': run['stats'].requests_per_second_plot,
+            'active_sessions_per_second_plot': run['stats'].sessions_per_second_plot,
+            'response_times_plot': run['stats'].response_times_plot
         })
 
         return view

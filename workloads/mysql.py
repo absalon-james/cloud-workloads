@@ -5,6 +5,8 @@ import subprocess
 from common.workload import Workload as BaseWorkload
 from common.view import View
 
+from operator import attrgetter
+
 
 class Iteration(dict):
     """
@@ -49,7 +51,7 @@ class Iteration(dict):
 
     def __str__(self):
         return "\n\t".join([
-            "Mysql DBT2 Iteration",
+            "Mysql DBT2 Result",
             "New Order Transactions per minute: %s" % self.get('tpm'),
             "Change over last: %s" % self.get('delta'),
             "Warehouses used: %s " % self.get('warehouses'),
@@ -65,51 +67,48 @@ class Workload(BaseWorkload):
     Class that handles a MySQL workload.
     """
 
-    def __init__(self):
-        self._iterations = []
-        self._config()
+    DEFAULT_STATES = {
+        'dbt2_db': ['dbt2.db'],
+        'dbt2': ['dbt2.dbt2']
+    }
 
-    def _config(self):
-        """
-        Should load any necessary configuration for the workload.
-        Possibilities include webheads, db server addresses, number of
-        clients, etc.
-        """
-        self._conf = {}
+    DEFAULT_ANTI_STATES = {
+        'dbt2_db': ['dbt2.antidb'],
+        'dbt2': ['dbt2.antidbt2']
+    }
 
-        parser = ConfigParser.ConfigParser()
+    DEFAULT_CONFIG = {
+        'dbt2_role': 'dbt2',
+        'dbt2_db_role': 'dbt2_db',
+        'dbt2_path': '/opt/dbt2-0.37.50.3',
 
-        parser.add_section('host')
-        parser.set('host', 'host', '127.0.0.1')
-        parser.set('host', 'database', 'dbt2')
-        parser.set('host', 'user', 'dbt2')
-        parser.set('host', 'password', 'dbt2')
+        # Should be updated via pillar
+        'user': 'dbt2',
+        'password': 'dbt2',
+        'database': 'dbt2',
+        'warehouses': 5,
+        'mysql_path': '/usr/lib/mysql',
 
-        parser.add_section('dbt2')
-        parser.set('dbt2', 'connections', '20')
-        parser.set('dbt2', 'duration', '60')
-        parser.set('dbt2', 'warehouses', '10')
-        parser.set('dbt2', 'firstwarehouse', '1')
-        parser.set('dbt2', 'path', '/home/<user name>/dbt2-0.37.50.3/')
-        parser.set('dbt2', 'mindelta', '250')
+        # Should be updated via pillar or workload config
+        'duration': 180,
+        'connections': 20,
+        'first_warehouse': 1,
+        'last_warehouse': 1,
+        'mindelta': 250
+    }
 
-        parser.add_section('mysql-client')
-        parser.set('mysql-client', 'path', '/usr/lib/mysql')
+    def __init__(self, client, pool, config):
+        super(Workload, self).__init__(client, pool, config)
+        self._results = []
 
-        parser.read('config/mysql.ini')
+    def deploy(self):
+        super(Workload, self).deploy()
 
-        self._conf.update({
-            'host': parser.get('host', 'host'),
-            'database': parser.get('host', 'database'),
-            'user': parser.get('host', 'user'),
-            'password': parser.get('host', 'password'),
-            'connections': parser.get('dbt2', 'connections'),
-            'duration': parser.get('dbt2', 'duration'),
-            'warehouses': parser.get('dbt2', 'warehouses'),
-            'firstwarehouse': parser.get('dbt2', 'firstwarehouse'),
-            'mindelta': parser.get('dbt2', 'mindelta'),
-            'dbt2_path': parser.get('dbt2', 'path'),
-            'mysql_path': parser.get('mysql-client', 'path')})
+        # update config information from pillar
+        minions = self.minions_with_role(self.config['dbt2_role'])
+        pillar = self.client.get_pillar(minions, 'db', {})
+        self.config.update(pillar.values()[0])
+        self.config.update({'location': self.location()})
 
     @property
     def name(self):
@@ -120,194 +119,98 @@ class Workload(BaseWorkload):
         """
         return "MySQL"
 
-    @property
-    def host(self):
+    def location(self):
         """
         Returns the mysql host.
         Taken from the config.
 
         :returns: String
         """
-        return self._conf.get('host')
+        minion = self.minions_with_role(self.config['dbt2_db_role'])[0]
+        ips_dict = self.client.get_ips(minion, interface='private')
+        return ips_dict.values()[0][0]
 
-    @property
-    def database(self):
-        """
-        Returns the database which houses dbt2 test data.
-        Taken from the config.
-
-        :returns: String
-        """
-        return self._conf.get('database')
-
-    @property
-    def user(self):
-        """
-        Returns the user allowed to access the database.
-        Taken from the config.
-
-        :returns: String
-        """
-        return self._conf.get('user')
-
-    @property
-    def password(self):
-        """
-        Returns the password of the user allowed to access the database.
-        Taken from the config.
-
-        :returns: String
-        """
-        return self._conf.get('password')
-
-    @property
-    def connections(self):
-        """
-        Returns the number of simultaneous connections dbt2 is to use while
-        benchmarking.
-        Taken from the config.
-
-        :returns: Integer
-        """
-        return int(self._conf.get('connections'))
-
-    @property
-    def duration(self):
-        """
-        Returns the duration of the test in seconds.
-        Taken from the config.
-
-        :returns: Integer
-        """
-        return int(self._conf.get('duration'))
-
-    @property
-    def warehouses(self):
-        """
-        Returns the total number of warehouses data was generated for.
-        Taken from the config.
-
-        :returns: Integer
-        """
-        return int(self._conf.get('warehouses'))
-
-    @property
-    def start_warehouse(self):
-        """
-        Returns the starting warehouse.  The first iteration will start
-        at this warehouse.
-        Taken from the config.
-
-        :returns: Integer
-        """
-        return int(self._conf.get('firstwarehouse'))
-
-    @property
-    def mindelta(self):
-        """
-        Returns the minimum change that must occur from iteration to
-        iteration in order to continue.
-
-        :returns: Integer
-        """
-        return int(self._conf.get('mindelta'))
-
-    @property
-    def dbt2_path(self):
-        """
-        Returns the location of dbt2.
-        Taken from the config.
-
-        :returns: String
-        """
-        return self._conf.get('dbt2_path')
-
-    @property
-    def mysql_client_path(self):
-        """
-        Returns the location of the mysql client.  Dbt2 uses this to
-        communicate with the mysql host.
-        Taken from the config.
-
-        :returns: String
-        """
-        return self._conf.get('mysql_path')
-
-    def command(self, warehouses=0):
+    def command(self, last_warehouse):
         """
         Assembles the command that would be run via the command line.
         :returns: List of arguments
         """
-        return [
-            '/bin/bash',  os.path.join(self.dbt2_path, 'scripts/run_mysql.sh'),
-            '--connections', str(self.connections),
-            '--time', str(self.duration),
-            '--warehouses', str(self.warehouses),
-            '--database', self.database,
-            '--host', self.host,
-            '--user', self.user,
-            '--password', self.password,
-            '--first-warehouse', str(self.start_warehouse),
-            '--last-warehouse', str(warehouses),
-            '--lib-client-path', self.mysql_client_path,
-            '--zero-delay']
+        cmd = ("/bin/bash %s --connections %s --time %s --warehouses %s "
+               "--database %s --host %s --user %s --password %s "
+               "--first-warehouse %s --last-warehouse %s --lib-client-path %s "
+               "--zero-delay")
+
+        return cmd % (
+            os.path.join(self.config['dbt2_path'], 'scripts/run_mysql.sh'),
+            self.config['connections'],
+            self.config['duration'],
+            self.config['warehouses'],
+            self.config['database'],
+            self.config['location'],
+            self.config['user'],
+            self.config['password'],
+            self.config['first_warehouse'],
+            last_warehouse,
+            self.config['mysql_path'])
 
     @property
-    def best_iteration(self):
-        max_tpm = 0
-        max_iteration = None
-        for it in self._iterations:
-            if it.get('tpm') > max_tpm:
-                max_tpm = it.get('tpm')
-                max_iteration = it
-
-        return max_iteration
+    def best_run(self):
+        best_run = None
+        if len(self._results) > 0:
+            f = lambda it: it['tpm']
+            best_run = max(self._results, key=f)
+        return best_run
 
     def run(self):
         """Runs the workload"""
 
         previous_tpm = 0
-        warehouses = self.start_warehouse
-        devnull = open(os.devnull, 'wb')
+        last_warehouse = int(self.config['last_warehouse'])
+        total_warehouses = int(self.config['warehouses'])
+
+        runners = self.minions_with_role(self.config['dbt2_role'])
+
+        #devnull = open(os.devnull, 'wb')
 
         while (True):
             # Cannot execute command with more than the total number
             # of warehouses available.
-            if warehouses > self.warehouses:
+            if last_warehouse > total_warehouses:
+                print "Breakking because of warehouses:\nlast warehouse: %s\nTotal: %s" % (last_warehouse, total_warehouses)
                 break
 
-            # Rung the command
-            args = self.command(warehouses=warehouses)
-            process = subprocess.Popen(args,
-                                       stdout=subprocess.PIPE,
-                                       stderr=devnull)
-            output, err = process.communicate()
+            cmd = self.command(last_warehouse)
 
-            # Only the listed return codes indicate success
-            if process.returncode not in [0]:
+            kwargs = {
+                'timeout': 2 * int(self.config['duration']),
+                'arg': (cmd,),                
+            }
+            exe_resp = self.client.cmd(runners[0].id_, 'cmd.run_all', **kwargs).values()[0]
+
+            if exe_resp['retcode'] not in [0]:
+                print exe_resp.get('stderr') or "No stderr"
+                break
+            stdout = cStringIO.StringIO(exe_resp['stdout'])
+
+            result = Iteration(stdout, previous_tpm, last_warehouse,
+                               self.config['location'],
+                               self.config['connections'])
+            self._results.append(result)
+
+            print result
+            previous_tpm = result.get('tpm')
+            if result.get('delta') < int(self.config['mindelta']):
                 break
 
-            # Parse outout into a usuable form
-            output = cStringIO.StringIO(output)
-            iteration = Iteration(output, previous_tpm, warehouses,
-                                  self.host, self.connections)
+            last_warehouse += 1
 
-            self._iterations.append(iteration)
-            print iteration
-
-            previous_tpm = iteration.get('tpm')
-            if iteration.get('delta') < self.mindelta:
-                break
-
-            warehouses += 1
-
-        print "\n\nBest iteration"
-        print self.best_iteration
+        print "\n\nBest run"
+        print self.best_run
 
     @property
     def tpm_plot(self):
         return [{'x': it.get('warehouses'),
-                'y': it.get('tpm')} for it in self._iterations]
+                'y': it.get('tpm')} for it in self._results]
 
     def view(self):
         """
@@ -316,12 +219,12 @@ class Workload(BaseWorkload):
 
         :returns: String html representation of workload output
         """
-        best_iteration = self.best_iteration
+        best_run = self.best_run
         tpm_plot = self.tpm_plot
 
         return View('mysql.html', {
-            'tpm': best_iteration.get('tpm'),
-            'warehouses': best_iteration.get('warehouses'),
+            'tpm': best_run.get('tpm'),
+            'warehouses': best_run.get('warehouses'),
             'tpm_plot': self.tpm_plot
         })
 

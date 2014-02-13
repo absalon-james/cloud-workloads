@@ -1,3 +1,5 @@
+from operator import attrgetter
+
 class Action(list):
     """
     Base class for modeling an action in the gatling simulation.log.
@@ -321,7 +323,19 @@ class Stats(dict):
                 response_times['t > 1200ms'] += 1
         return response_times
 
-    def __init__(self, iteration):
+    def update(self, simulation_log_io):
+
+        for line in simulation_log_io:
+            line = line.strip("\n").split("\t")
+            if line[0] in self._actions:
+                self._actions[line[0]].append(
+                  self._action_classes[line[0]](line))
+
+        self.end_time = max(self.scenarios, key=attrgetter("end_time")).end_time
+        self.start_time = min(self.scenarios, key=attrgetter("start_time")).end_time
+        
+
+    def __init__(self):
         """
         Inits the stats object parsing through the simulation.log file
         indicated by the iteration.
@@ -333,12 +347,3 @@ class Stats(dict):
             'REQUEST': [],
             'SCENARIO': []
         }
-
-        with open(iteration.simulation_log) as logfile:
-            for line in logfile:
-                line = line.strip("\n").split("\t")
-                self._actions[line[0]].append(
-                    self._action_classes[line[0]](line))
-
-        self.end_time = max([it.end_time for it in self.scenarios])
-        self.start_time = min([it.start_time for it in self.scenarios])

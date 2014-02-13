@@ -1,0 +1,54 @@
+<div class="application" id="hadoop">
+    <h3>Hadoop</h3>
+    <div class="scores">
+        <table>
+        <tr>
+            <td class="score-label">Number of 100 Byte records</td>
+            <td class="score-value">${numrecords}</td>
+        </tr>
+        <tr>
+            <td class="score-section-heading" colspan="2">Teragen</td>
+        </tr>
+        <tr>
+            <td class="score-label">Duration (s)</td>
+            <td class="score-value">${teragen_duration}</td>
+        </tr>
+        <tr>
+            <td class="score-label">Map Tasks</td>
+            <td class="score-value">${teragen_map_tasks}</td>
+        </tr>
+        <tr>
+            <td class="score-section-heading" colspan="2">Terasort</td>            
+        </tr>
+        <tr>
+            <td class="score-label">Duration (s)</td>
+            <td class="score-value">${terasort_duration}</td>
+        </tr>
+        <tr>
+            <td class="score-label">Map Tasks</td>
+            <td class="score-value">${terasort_reduce_tasks}</td>
+        </tr>
+        <tr>
+            <td class="score-label">Reduce Tasks</td>
+            <td class="score-value">${terasort_reduce_tasks}</td>
+        </tr>
+        </table>
+    </div>
+
+    <div class="explanation">
+        <p>
+        The hadoop test consists of Teragen and Terasort. Teragen generates a
+        specified number of 100 byte records.  Terasort then sorts those
+        records.  The time to complete each task is measured.
+        </p>
+
+        <p>
+            <a href="http://hadoop.apache.org/">Hadoop</a>,
+            <a href="http://hadoop.apache.org/docs/r2.2.0/api/org/apache/hadoop/examples/terasort/package-summary.html">Teragen</a>,
+            <a href="http://hadoop.apache.org/docs/r2.2.0/api/org/apache/hadoop/examples/terasort/package-summary.html">Terasort</a>
+        </p>
+    </div>
+    
+    <div class="clearfix"></div>
+    </script>
+</div>
