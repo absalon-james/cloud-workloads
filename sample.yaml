@@ -17,10 +17,6 @@ standard_hadoop:
         - hadoop_master
     - roles:
         - hadoop_slave
-    - roles:
-        - hadoop_slave
-    - roles:
-        - hadoop_slave
 
 standard_mysql:
   connections: 20

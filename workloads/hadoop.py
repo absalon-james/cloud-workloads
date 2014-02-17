@@ -120,6 +120,10 @@ class Workload(BaseWorkload):
         teragen_resp = self.client.cmd(runner.id_, 'cmd.run_all', **kwargs).values()[0]
         end = time.time()
 
+        print "Tergen response:"
+        #print "Retcode: %s" % teragen_resp['retcode']
+        #print "Stdout: ", teragen_resp.get('stdout', 'woops')
+        #print "Stderr: ", teragen_resp.get('stderr', 'woops')
         self.result['teragen'] = TeraResult(teragen_resp, start, end)
 
         terasort_cmd = self.terasort_command()
@@ -130,6 +134,10 @@ class Workload(BaseWorkload):
         start = time.time()
         terasort_resp = self.client.cmd(runner.id_, 'cmd.run_all', **kwargs).values()[0]
         end = time.time()
+        print "Terasort response:"
+        #print "Retcode: %s" % terasort_resp['retcode']
+        #print "Stdout: ", terasort_resp.get('stdout', 'woops')
+        #print "Stderr: ", terasort_resp.get('stderr', 'woops')
         self.result['terasort'] = TeraResult(terasort_resp, start, end)
     
     def view(self):
