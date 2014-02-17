@@ -62,6 +62,20 @@ class Workload(BaseWorkload):
         'terasort_size': 500000, # number of 100 byte lines to sort
     }
 
+    DEPLOY_SEQUENCE = [
+        {
+         'state': 'hadoop.hdfs',
+         'next': {
+            'state': 'hadoop.mapred'
+            }
+        }
+    ]
+
+    UNDEPLOY_SEQUENCE = [
+        {'state': 'hadoop.antihadoop'}
+    ]
+
+
     def __init__(self, client, pool, config):
         super(Workload, self).__init__(client, pool, config)
         self.result = {}
@@ -120,7 +134,7 @@ class Workload(BaseWorkload):
         teragen_resp = self.client.cmd(runner.id_, 'cmd.run_all', **kwargs).values()[0]
         end = time.time()
 
-        print "Tergen response:"
+        #print "Tergen response:"
         #print "Retcode: %s" % teragen_resp['retcode']
         #print "Stdout: ", teragen_resp.get('stdout', 'woops')
         #print "Stderr: ", teragen_resp.get('stderr', 'woops')
@@ -134,7 +148,7 @@ class Workload(BaseWorkload):
         start = time.time()
         terasort_resp = self.client.cmd(runner.id_, 'cmd.run_all', **kwargs).values()[0]
         end = time.time()
-        print "Terasort response:"
+        #print "Terasort response:"
         #print "Retcode: %s" % terasort_resp['retcode']
         #print "Stdout: ", terasort_resp.get('stdout', 'woops')
         #print "Stderr: ", terasort_resp.get('stderr', 'woops')

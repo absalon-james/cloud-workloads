@@ -33,6 +33,25 @@ class Workload(GatlingWorkload):
         'users_step': '25'
     }
 
+    DEPLOY_SEQUENCE = [
+        {
+         'state': 'magento.db_master',
+         'next': {
+            'state': 'magento.db_slave'
+            }
+        },
+        {'state': 'magento.web'},
+        {'state': 'magento.gatling'}
+    ]
+
+    UNDEPLOY_SEQUENCE = [
+        {'state': 'magento.antidb_master'},
+        {'state': 'magento.antidb_slave'},
+        {'state': 'magento.antiweb'},
+        {'state': 'magento.antigatling'}
+    ]
+
+
     @property
     def name(self):
         """

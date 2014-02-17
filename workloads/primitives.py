@@ -43,6 +43,15 @@ class Workload(BaseWorkload):
         'network_dir': 'iperf-2.0.5'
     }
 
+    DEPLOY_SEQUENCE = [
+        {'state': 'primitives'}
+    ]
+
+    UNDEPLOY_SEQUENCE = [
+        {'state': 'primitives.anti'}
+    ]
+
+
     def __init__(self, client, pool, config):
         super(Workload, self).__init__(client, pool, config)
         self.is_primitive = True

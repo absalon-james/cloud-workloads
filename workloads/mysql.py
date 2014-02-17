@@ -97,6 +97,20 @@ class Workload(BaseWorkload):
         'mindelta': 250
     }
 
+    DEPLOY_SEQUENCE = [
+        {
+         'state': 'dbt2.db',
+         'next': {
+            'state': 'dbt2.dbt2'
+            }
+        },
+    ]
+
+    UNDEPLOY_SEQUENCE = [
+        {'state': 'dbt2.antidb'},
+        {'state': 'dbt2.antidbt2'}
+    ]
+
     def __init__(self, client, pool, config):
         super(Workload, self).__init__(client, pool, config)
         self._results = []
