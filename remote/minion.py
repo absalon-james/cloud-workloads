@@ -12,7 +12,7 @@ class Minion(object):
 
         """
         self.data = grains_dict
-    
+
     def __getitem__(self, key, default=None):
         """
         Overrides the default getitem so that a path can be specified.
@@ -65,7 +65,7 @@ class Minion(object):
     @property
     def os(self):
         return self['os']
- 
+
     @property
     def osarch(self):
         return self['osarch']
@@ -78,7 +78,7 @@ class Minion(object):
     def interfaces(self):
         return self['interfaces']
 
-    def interface(interface):
+    def interface(self, interface):
         return self['interface:%s' % interface]
 
     @property

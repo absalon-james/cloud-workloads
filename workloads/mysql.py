@@ -1,11 +1,7 @@
-import ConfigParser
 import cStringIO
 import os
-import subprocess
 from common.workload import Workload as BaseWorkload
 from common.view import View
-
-from operator import attrgetter
 
 
 class Iteration(dict):
@@ -97,6 +93,16 @@ class Workload(BaseWorkload):
         'mindelta': 250
     }
 
+    DEPLOY_SEQUENCE = [
+        {'state': 'dbt2.db',
+         'next': {'state': 'dbt2.dbt2'}},
+    ]
+
+    UNDEPLOY_SEQUENCE = [
+        {'state': 'dbt2.antidb'},
+        {'state': 'dbt2.antidbt2'}
+    ]
+
     def __init__(self, client, pool, config):
         super(Workload, self).__init__(client, pool, config)
         self._results = []
@@ -176,16 +182,16 @@ class Workload(BaseWorkload):
             # Cannot execute command with more than the total number
             # of warehouses available.
             if last_warehouse > total_warehouses:
-                print "Breakking because of warehouses:\nlast warehouse: %s\nTotal: %s" % (last_warehouse, total_warehouses)
                 break
 
             cmd = self.command(last_warehouse)
 
             kwargs = {
                 'timeout': 2 * int(self.config['duration']),
-                'arg': (cmd,),                
+                'arg': (cmd,),
             }
-            exe_resp = self.client.cmd(runners[0].id_, 'cmd.run_all', **kwargs).values()[0]
+            exe_resp = self.client.cmd(runners[0].id_, 'cmd.run_all', **kwargs)
+            exe_resp = exe_resp.values()[0]
 
             if exe_resp['retcode'] not in [0]:
                 print exe_resp.get('stderr') or "No stderr"
@@ -220,7 +226,6 @@ class Workload(BaseWorkload):
         :returns: String html representation of workload output
         """
         best_run = self.best_run
-        tpm_plot = self.tpm_plot
 
         return View('mysql.html', {
             'tpm': best_run.get('tpm'),

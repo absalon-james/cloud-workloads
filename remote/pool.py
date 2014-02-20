@@ -1,5 +1,6 @@
 import threading
 
+
 class NoAvailableMinionException(Exception):
     """Exception for when no minions are available."""
 
@@ -16,6 +17,7 @@ class NoAvailableMinionException(Exception):
 
         super(NoAvailableMinionException, self).__init__(msg)
 
+
 class LockedPoolException(Exception):
     """
     Exception is thrown when a non blocking request is made and
@@ -25,7 +27,7 @@ class LockedPoolException(Exception):
     def __init__(self):
         msg = "Minion pool is locked."
         super(LockedPoolException, self).__init__(msg)
-            
+
 
 class MinionPool(object):
     """
@@ -33,7 +35,6 @@ class MinionPool(object):
     provides synchronized access to the list.
 
     """
-      
 
     def __init__(self, minions, reservations=None):
         """
@@ -118,7 +119,10 @@ class MinionPool(object):
         if not locked:
             raise LockedPoolException()
         try:
-            minion = self._get_regular() if role is None else self._get_reserved(role)
+            if role is None:
+                minion = self._get_regular()
+            else:
+                minion = self._get_reserved(role)
         finally:
             self._lock.release()
         return minion

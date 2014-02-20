@@ -1,13 +1,9 @@
-import ConfigParser
 import cStringIO
 import os
-import subprocess
 import time
 from common.workload import Workload as BaseWorkload
 from common.view import View
 
-from operator import attrgetter
-import pprint
 
 class TeraResult(dict):
 
@@ -36,7 +32,7 @@ class TeraResult(dict):
                 if len(keyvalue) == 2:
                     key, value = keyvalue
                     self[key] = value
-        
+
 
 class Workload(BaseWorkload):
     """
@@ -59,8 +55,17 @@ class Workload(BaseWorkload):
         'hadoop_example': 'hadoop-examples-1.2.1.jar',
         'hadoop_user': 'hdfs',
         'terasort_data_path': '/teragen',
-        'terasort_size': 500000, # number of 100 byte lines to sort
+        'terasort_size': 500000,
     }
+
+    DEPLOY_SEQUENCE = [
+        {'state': 'hadoop.hdfs',
+         'next': {'state': 'hadoop.mapred'}}
+    ]
+
+    UNDEPLOY_SEQUENCE = [
+        {'state': 'hadoop.antihadoop'}
+    ]
 
     def __init__(self, client, pool, config):
         super(Workload, self).__init__(client, pool, config)
@@ -76,7 +81,8 @@ class Workload(BaseWorkload):
         return "Hadoop"
 
     def example_jar(self):
-        return os.path.join(self.config['hadoop_path'], self.config['hadoop_example'])
+        return os.path.join(self.config['hadoop_path'],
+                            self.config['hadoop_example'])
 
     def hadoop_bin(self):
         return os.path.join(self.config['hadoop_path'], 'bin/hadoop')
@@ -104,23 +110,23 @@ class Workload(BaseWorkload):
     def run(self):
         """Runs the workload"""
 
-        pp = pprint.PrettyPrinter(indent=4)
         runner = self.minions_with_role(self.config['hadoop_master_role'])[0]
 
         teragen_cmd = self.teragen_command()
         print "running: ", teragen_cmd
         kwargs = {
             'kwarg': {
-                'runas': self.config['hadoop_user']               
+                'runas': self.config['hadoop_user']
             },
             'arg': (teragen_cmd,),
-            'timeout': 3600 
+            'timeout': 3600
         }
         start = time.time()
-        teragen_resp = self.client.cmd(runner.id_, 'cmd.run_all', **kwargs).values()[0]
+        teragen_resp = self.client.cmd(runner.id_, 'cmd.run_all', **kwargs)
+        teragen_resp = teragen_resp.values()[0]
         end = time.time()
 
-        print "Tergen response:"
+        #print "Tergen response:"
         #print "Retcode: %s" % teragen_resp['retcode']
         #print "Stdout: ", teragen_resp.get('stdout', 'woops')
         #print "Stderr: ", teragen_resp.get('stderr', 'woops')
@@ -132,14 +138,15 @@ class Workload(BaseWorkload):
             'arg': (terasort_cmd,)
         })
         start = time.time()
-        terasort_resp = self.client.cmd(runner.id_, 'cmd.run_all', **kwargs).values()[0]
+        terasort_resp = self.client.cmd(runner.id_, 'cmd.run_all', **kwargs)
+        terasort_resp = terasort_resp.values()[0]
         end = time.time()
-        print "Terasort response:"
+        #print "Terasort response:"
         #print "Retcode: %s" % terasort_resp['retcode']
         #print "Stdout: ", terasort_resp.get('stdout', 'woops')
         #print "Stderr: ", terasort_resp.get('stderr', 'woops')
         self.result['terasort'] = TeraResult(terasort_resp, start, end)
-    
+
     def view(self):
         """
         Should return a string view of this workload.  The string should be
@@ -148,8 +155,12 @@ class Workload(BaseWorkload):
         :returns: String html representation of workload output
         """
 
-        teragen_duration = round(self.result['teragen'].get('duration', 0), 2)
-        terasort_duration = round(self.result['terasort'].get('duration', 0), 2)
+        result = self.result
+
+        teragen_duration = result['teragen'].get('duration', 0)
+        teragen_duration = round(teragen_duration, 2)
+        terasort_duration = result['terasort'].get('duration', 0)
+        terasort_duration = round(terasort_duration, 2)
         total_time = teragen_duration + terasort_duration
         if total_time > 0:
             teragen_percent = round((teragen_duration / total_time) * 100, 2)
@@ -157,7 +168,6 @@ class Workload(BaseWorkload):
         else:
             teragen_percent = 0
             terasort_percent = 0
-        
 
         datapoints = [
             {'y': teragen_duration,
@@ -168,13 +178,19 @@ class Workload(BaseWorkload):
              'name': "Time sorting data"}
         ]
 
+        numrecords = result['teragen'].get('Map output records', '??')
+        teragen_map_tasks = result['teragen'].get('Launched map tasks', 0)
+        terasort_map_tasks = result['terasort'].get('Launched map tasks', 0)
+        terasort_reduce_tasks = \
+            result['terasort'].get('Launched reduce tasks', 0)
+
         return View('hadoop.html', {
-            'numrecords': self.result['teragen'].get('Map output records', '??'),
+            'numrecords': numrecords,
             'teragen_duration': teragen_duration,
-            'teragen_map_tasks': self.result['teragen'].get('Launched map tasks', 0),
+            'teragen_map_tasks': teragen_map_tasks,
             'terasort_duration': terasort_duration,
-            'terasort_map_tasks': self.result['terasort'].get('Launched map tasks', 0),
-            'terasort_reduce_tasks': self.result['terasort'].get('Launched reduce tasks', 0),
+            'terasort_map_tasks': terasort_map_tasks,
+            'terasort_reduce_tasks': terasort_reduce_tasks,
             'terasort_data_points': datapoints
         })
 

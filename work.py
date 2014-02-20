@@ -3,10 +3,10 @@ import os
 import shutil
 from common.config import YamlConfig
 from common.view import View
-from common.workload import Workload
 from remote.client import Client
 from remote.credentials import Pam
 from remote.pool import MinionPool
+from remote.event import EventStore, JobPoller
 import traceback
 
 
@@ -34,12 +34,13 @@ def load_workload_class(workload_name):
     # Loads a Workload class defined as
     # workloads.<workload_name>.Workload
     try:
-        module = __import__('.'.join(['workloads', workload_name]), fromlist=[workload_name])
+        name = '.'.join(['workloads', workload_name])
+        module = __import__(name, fromlist=[workload_name])
         return module.Workload
     except ImportError:
-        raise MissingWorkloadModuleError(load)
+        raise MissingWorkloadModuleError(workload_name)
     except AttributeError:
-        raise MissingWorkloadClassError(load)
+        raise MissingWorkloadClassError(workload_name)
 
 
 class Runner(object):
@@ -53,7 +54,7 @@ class Runner(object):
         Inits the runner
 
         :param workloads: List of workload classes to run.
-        
+
         """
         self.config = config
         self.credentials = credentials
@@ -65,39 +66,52 @@ class Runner(object):
         Runs workloads according to the config
 
         """
+        event_store = EventStore()
+        job_poller = JobPoller(event_store)
+
         # Set up the salt client
-        client = Client(self.credentials)
+        client = Client(event_store, credentials=self.credentials)
 
         # Set up the minion pool
         pool_config = self.config.get_minion_pool()
-        minions = client.minions(pool_config['target'], pool_config['expr_form'])
-        pool = MinionPool(minions)
 
-        for name, workload_config in self.config.iter_workloads():
-            class_name = workload_config.get('workload')
-            workload_class = load_workload_class(class_name)
-            workload = workload_class(client, pool, workload_config)
+        try:
+            job_poller.start()
+            minions = client.minions(pool_config['target'],
+                                     pool_config['expr_form'])
+            pool = MinionPool(minions)
 
-            print "-".ljust(80, '-')
-            print ("---- Running workload %s " % workload.name).ljust(80, '-')
-            print "-".ljust(80, '-')
+            for name, workload_config in self.config.iter_workloads():
+                class_name = workload_config.get('workload')
+                workload_class = load_workload_class(class_name)
+                workload = workload_class(client, pool, workload_config)
 
-            try:
-                workload.deploy()
-                workload.run()
-            except Exception, e:
-                # @TODO Do something with the exception
-                print "Something happened when running workload: %s" % name
-                print e
-                print traceback.print_exc()
-                pass
-            finally:
-                workload.undeploy()
-        
-            if (workload.is_primitive):
-                self.primitives = workload
-            else:
-                self.workloads.append(workload)
+                print "-".ljust(80, '-')
+                title = ("---- Running workload %s " % workload.name)
+                print title.ljust(80, '-')
+                print "-".ljust(80, '-')
+
+                try:
+                    workload.deploy()
+                    workload.run()
+                except Exception, e:
+                    # @TODO Do something with the exception
+                    print "Something happened when running workload: %s" % name
+                    print e
+                    print traceback.print_exc()
+                    pass
+                finally:
+                    workload.undeploy()
+
+                if (workload.is_primitive):
+                    self.primitives = workload
+                else:
+                    self.workloads.append(workload)
+        finally:
+            print "Stopping the job poller"
+            job_poller.signal_stop()
+            job_poller.join()
+            print "Job poller stopped"
 
     def view(self):
         """
@@ -115,10 +129,19 @@ class Runner(object):
 def parse_args():
     prog = "Cloud Workloads"
     parser = argparse.ArgumentParser(prog=prog)
-    parser.add_argument('config_file', help="Yaml configuration file describing cloud workloads.")
-    parser.add_argument('output_dir', help="Output directory to place html, css, and javascript files.")
-    parser.add_argument('--username', default=None, help="User for salt external authentication.")
-    parser.add_argument('--password', default=None, help="Password for salt external authentication.")
+
+    help_ = "Yaml configuration file describing cloud workloads."
+    parser.add_argument('config_file', help=help_)
+
+    help_ = "Output directory to place html, css, and javascript files."
+    parser.add_argument('output_dir', help=help_)
+
+    help_ = "User for salt external authentication."
+    parser.add_argument('--username', default=None, help=help_)
+
+    help_ = "Password for salt external authentication."
+    parser.add_argument('--password', default=None, help=help_)
+
     return parser.parse_args()
 
 if __name__ == "__main__":

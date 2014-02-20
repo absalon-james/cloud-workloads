@@ -1,4 +1,3 @@
-from common.gatling.stats import Stats
 from common.gatling.workload import Workload as GatlingWorkload
 from common.view import View
 
@@ -33,6 +32,20 @@ class Workload(GatlingWorkload):
         'users_step': '25'
     }
 
+    DEPLOY_SEQUENCE = [
+        {'state': 'drupal.db_master',
+         'next': {'state': 'drupal.db_slave'}},
+        {'state': 'drupal.web'},
+        {'state': 'drupal.gatling'}
+    ]
+
+    UNDEPLOY_SEQUENCE = [
+        {'state': 'drupal.antidb_master'},
+        {'state': 'drupal.antidb_slave'},
+        {'state': 'drupal.antiweb'},
+        {'state': 'drupal.antigatling'}
+    ]
+
     @property
     def name(self):
         """
@@ -50,19 +63,20 @@ class Workload(GatlingWorkload):
         """
         return super(Workload, self).command('drupal.UserSimulation')
 
-
     def view(self):
         run = self.best_run
 
-        view = View('drupal.html', {
+        view_dict = {
             'users': run.users,
             'duration': run.duration,
             'mean_response_time': run.mean_response_time,
             'requests_per_second_plot': run['stats'].requests_per_second_plot,
-            'active_sessions_per_second_plot': run['stats'].sessions_per_second_plot,
             'response_times_plot': run['stats'].response_times_plot
-        })
+        }
+        view_dict['active_sessions_per_second_plot'] = \
+            run['stats'].sessions_per_second_plot,
 
+        view = View('drupal.html', view_dict)
         return view
 
 if __name__ == '__main__':

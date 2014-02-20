@@ -1,10 +1,5 @@
-import ConfigParser
 import cStringIO
-import json
 import os
-import paramiko
-import subprocess
-import time
 
 from common.primitives.bench_analyzer import bench_analyzer
 from common.primitives.parser import io_parser, cpu_parser, network_parser
@@ -43,32 +38,18 @@ class Workload(BaseWorkload):
         'network_dir': 'iperf-2.0.5'
     }
 
+    DEPLOY_SEQUENCE = [
+        {'state': 'primitives'}
+    ]
+
+    UNDEPLOY_SEQUENCE = [
+        {'state': 'primitives.anti'}
+    ]
+
     def __init__(self, client, pool, config):
         super(Workload, self).__init__(client, pool, config)
         self.is_primitive = True
         self._iterations = []
-
-    def _config(self):
-        """
-        Loads necessary configuration values for this workload.
-
-        :param conf_file: String name of configuration file.
-        """
-        # Default IO parameters
-        parser.add_section("IO")
-        parser.set("IO", "directory", "filebench-1.4.9.1")
-        parser.set("IO", "tests_to_run", "randomrw.f")
-
-        # Default Network parameters
-        parser.add_section("Network")
-        parser.set("Network", "directory", "iperf-2.0.5")
-        parser.set("Network", "remote_host", "127.0.0.1")
-        parser.set("Network", "remote_user", "user")
-        parser.set("Network", "remote_cred_type", "remote_password")
-        parser.set("Network", "remote_password", "password")
-        parser.set("Network", "remote_key", "~/.ssh/id_rsa")
-
-        parser.read(conf_file)
 
     @property
     def name(self):
@@ -162,7 +143,8 @@ class Workload(BaseWorkload):
             self.config['cpu_iterations_per_test']
         )
 
-        cwd = os.path.join(self.config['primitives_dir'], self.config['cpu_dir'])
+        cwd = os.path.join(self.config['primitives_dir'],
+                           self.config['cpu_dir'])
 
         kwargs = {
             'timeout': 3600,
@@ -194,7 +176,7 @@ class Workload(BaseWorkload):
             test_file = os.path.join(io_workload_dir, test)
             kwargss.append({
                 'arg': (empty_cmd % (script, test_file),),
-                'timeout': 3600       
+                'timeout': 3600
             })
         return kwargss
 
@@ -215,22 +197,13 @@ class Workload(BaseWorkload):
                        'timeout': 360}
         }
 
-    def run_command(self, cmd):
-        """
-        Runs the given command and provides the output
-
-        :returns: cStringIO object
-        """
-        process = subprocess.Popen(cmd, stdout=subprocess.PIPE)
-        output, err = process.communicate()
-        return cStringIO.StringIO(output)
-
     def run_cpu(self):
 
         #--------------------CPU CMD--------------------
         runner = self.minions_with_role(self.config['runner_role'])[0]
         cpu_kwargs = self.cpu_command()
-        cpu_resp = self.client.cmd(runner.id_, 'cmd.run_all', **cpu_kwargs).values()[0]
+        cpu_resp = self.client.cmd(runner.id_, 'cmd.run_all', **cpu_kwargs)
+        cpu_resp = cpu_resp.values()[0]
 
         # getting data is a two step process
         # Step 1 is parse the file name out of stdout
@@ -240,7 +213,8 @@ class Workload(BaseWorkload):
         kwargs = {
             'arg': ('cat %s' % cpu_data['json_data_file'],)
         }
-        data_resp = self.client.cmd(runner.id_, 'cmd.run_all', **kwargs).values()[0]
+        data_resp = self.client.cmd(runner.id_, 'cmd.run_all', **kwargs)
+        data_resp = data_resp.values()[0]
         cpu_data.update_with_json(data_resp['stdout'])
 
         #take output and analyze it. Basically take weighted averages of
@@ -264,10 +238,11 @@ class Workload(BaseWorkload):
         #Grab list of commands we're going to run and initialize the io parser
         kwargss = self.io_commands()
         fb_data = io_parser()
-        
-        #run commands and add outptu to parser as we go
+
+        #run commands and add output to parser as we go
         for kwargs in kwargss:
-            resp = self.client.cmd(runner.id_, 'cmd.run_all', **kwargs).values()[0]
+            resp = self.client.cmd(runner.id_, 'cmd.run_all', **kwargs)
+            resp = resp.values()[0]
             output = cStringIO.StringIO(resp['stdout'])
             fb_data.parse(kwargs['arg'][0], output)
 
@@ -285,7 +260,6 @@ class Workload(BaseWorkload):
                                           fb_create_score_dict,
                                           json_data=fb_data)
 
-
     def run_network(self):
 
         #Get the local and remote commands that we'll need to run
@@ -294,13 +268,17 @@ class Workload(BaseWorkload):
         # Start the listening iperf server
         remote_runner = self.minions_with_role(self.config['target_role'])[0]
         remote_kwargs = network_kwargss['remote']
-        remote_resp = self.client.job(remote_runner.id_, 'cmd.run_all', **remote_kwargs)
+        self.client.job(remote_runner.id_, 'cmd.run_all', **remote_kwargs)
 
         runner = self.minions_with_role(self.config['runner_role'])[0]
         runner_kwargs = network_kwargss['local']
-        runner_resp = self.client.cmd(runner.id_, 'cmd.run_all', **runner_kwargs).values()[0]
-        
-        network_data = network_parser(cStringIO.StringIO(runner_resp['stdout']))
+        runner_resp = self.client.cmd(runner.id_,
+                                      'cmd.run_all',
+                                      **runner_kwargs)
+        runner_resp = runner_resp.values()[0]
+        network_data = network_parser(
+            cStringIO.StringIO(runner_resp['stdout'])
+        )
         network_info = {
             "conn_0":
             {

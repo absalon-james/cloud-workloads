@@ -1,5 +1,3 @@
-import pprint
-
 class Workload(object):
     """
     Class that handles a cloud workload.  A workload should consist
@@ -39,7 +37,7 @@ class Workload(object):
         """
         Requests minions from minion pool, applies roles to the minions, and
         then applies salt states to the minions.
- 
+
         """
         self.get_minions()
         self.apply_roles()
@@ -70,8 +68,8 @@ class Workload(object):
         @param role - String role
         @return List of minions
         """
-        return [i['minion'] for i in self.instances if role in i['minion'].roles]
-        
+        return [i['minion'] for i in self.instances
+                if role in i['minion'].roles]
 
     def get_minions(self):
         """
@@ -92,7 +90,7 @@ class Workload(object):
                 for role in roles:
                     states = self.DEFAULT_STATES.get(role, [])
                     instance['states'].update(states)
-                    
+
             if not 'antistates' in instance:
                 instance['antistates'] = set()
                 for role in roles:
@@ -100,7 +98,7 @@ class Workload(object):
                     instance['antistates'].update(antistates)
 
             self.instances.append(instance)
- 
+
     def apply_roles(self):
         """
         Applies roles to each minion according to its instance.
@@ -108,25 +106,62 @@ class Workload(object):
         the minion.
 
         """
+        minion_sets = []
+        role_sets = []
         for instance in self.instances:
             minion = instance.get('minion')
             roles = set(minion.roles or [])
             for role in instance.get('roles', []):
                 roles.add(role)
             roles = list(roles)
-            self.client.set_roles(minion, roles)
+            minion_sets.append([minion])
+            role_sets.append(roles)
+        self.client.set_roles(minion_sets, role_sets, timeout=30)
+
+    def deploy_plan(self, deploy=True):
+        """
+        Creates a list of SaltJobs to deploy according to the specified
+        sequence.
+
+        @param deploy - If true uses the DEPLOY_SEQUENCE, else uses the
+            undeploy sequence
+        @return - List of SaltJobs
+
+        """
+        if deploy:
+            deploy_sequence = self.DEPLOY_SEQUENCE
+            states_key = 'states'
+        else:
+            deploy_sequence = self.UNDEPLOY_SEQUENCE
+            states_key = 'antistates'
+        cmds = []
+        for sequence in deploy_sequence:
+            chain = None
+            while True:
+                state = sequence['state']
+                minions = []
+                for instance in self.instances:
+                    if state in instance[states_key]:
+                        minions.append(instance['minion'])
+                cmd = self.client.prepare_job_state(minions, state, sync=True)
+                if chain:
+                    chain.link(cmd)
+                else:
+                    chain = cmd
+                if not 'next' in sequence:
+                    break
+                sequence = sequence['next']
+            cmds.append(chain)
+        return cmds
 
     def apply_states(self):
         """
         Applies states to the minions as decribed by each minion's instance.
 
         """
-        print "Applying states ..."
-        for instance in self.instances:
-            minion = instance.get('minion')
-            for state in instance.get('states', []):
-                print "'%s' to %s" % (state, minion.id_)
-                result = self.client.apply_state(minion, state)
+
+        cmds = self.deploy_plan()
+        self.client.run_multi(cmds)
 
     def remove_states(self):
         """
@@ -134,16 +169,8 @@ class Workload(object):
         instance.
 
         """
-        print "Removing states ..."
-        for instance in self.instances:
-            minion = instance.get('minion')
-            for state in instance.get('antistates', []):
-                try:
-                    print "'%s' to %s" % (state, minion.id_)
-                    result = self.client.apply_state(minion, state)
-                except Exception as e:
-                    print e
-                
+        cmds = self.deploy_plan(deploy=False)
+        self.client.run_multi(cmds)
 
     def remove_roles(self):
         """
@@ -151,14 +178,18 @@ class Workload(object):
         Roles used in an instance are removed from the instance.
 
         """
+        minion_sets = []
+        role_sets = []
         for instance in self.instances:
             minion = instance.get('minion')
-            roles = set(minion.roles)
+            roles = set(minion.roles or [])
             for role in instance.get('roles', []):
                 if role in roles:
                     roles.remove(role)
-            roles = list(roles)            
-            self.client.set_roles(minion, roles)
+            roles = list(roles)
+            role_sets.append(roles)
+            minion_sets.append([minion])
+        self.client.set_roles(minion_sets, role_sets, timeout=30)
 
     def return_minions(self):
         """
@@ -168,7 +199,7 @@ class Workload(object):
         for instance in self.instances:
             minion = instance.get('minion')
             if minion is not None:
-                self.pool.put_minion(minion)       
+                self.pool.put_minion(minion)
 
     def run(self):
         """Runs the workload"""

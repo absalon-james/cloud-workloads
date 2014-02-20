@@ -33,7 +33,7 @@ class YamlConfig(dict):
 
         """
         for key, value in self.iteritems():
-            try: 
+            try:
                 if 'workload' in value:
                     yield key, value
             except TypeError:

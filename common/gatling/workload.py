@@ -1,7 +1,4 @@
 import cStringIO
-import ConfigParser
-import os
-import subprocess
 
 from common.workload import Workload as BaseWorkload
 
@@ -84,7 +81,8 @@ class Workload(BaseWorkload):
         if self.webheads is None:
             minions = self.minions_with_role(self.config['webhead_role'])
             ips_dict = self.client.get_ips(minions)
-            self.webheads = [self.config['webhead_url'] % ips[0] for ips in ips_dict.itervalues()]
+            self.webheads = [self.config['webhead_url'] % ips[0]
+                             for ips in ips_dict.itervalues()]
 
         return self.webheads
 
@@ -116,7 +114,8 @@ class Workload(BaseWorkload):
         :returns: String
 
         """
-        return 'sh /opt/%s/bin/gatling.sh -s %s' % (self.config['gatling_dir'], simulation)
+        return 'sh /opt/%s/bin/gatling.sh -s %s' % (self.config['gatling_dir'],
+                                                    simulation)
 
     def env(self, users=None, duration=None, webheads=None):
         """
@@ -164,12 +163,15 @@ class Workload(BaseWorkload):
 
             # Execution response (still have to make another request to
             # get the simulation.log file contents)
-            # @TODO expand to handle multi minion return, use only the first for now
-            exe_resp = self.client.cmd(runners[0].id_, 'cmd.run_all', **kwargs).values()[0]
+            exe_resp = self.client.cmd(runners[0].id_, 'cmd.run_all', **kwargs)
+            exe_resp = exe_resp.values()[0]
             retcode = exe_resp.get('retcode')
             stdout = exe_resp.get('stdout')
             stderr = exe_resp.get('stderr')
             stdout = cStringIO.StringIO(stdout)
+            if stderr:
+                # Do something with stderr if not empty or non none
+                pass
 
             result = GatlingResult(users, self.duration, self.webheads)
             result.update({'retcode': retcode})
@@ -181,7 +183,8 @@ class Workload(BaseWorkload):
                 'timeout': timeout,
                 'arg': ('cat %s' % result.simulation_log,)
             }
-            log_resp = self.client.cmd(runners[0].id_, 'cmd.run_all', **kwargs).values()[0]
+            log_resp = self.client.cmd(runners[0].id_, 'cmd.run_all', **kwargs)
+            log_resp = log_resp.values()[0]
             stdout = cStringIO.StringIO(log_resp.get('stdout'))
             stats = Stats()
             stats.update(stdout)
@@ -192,7 +195,7 @@ class Workload(BaseWorkload):
             # Check process codes.
             # 0 = success
             # 2 = Gatling worked but at least one assertion failed
-            if retcode not in [0,2] or not result.success:
+            if retcode not in [0, 2] or not result.success:
                 # @TODO handle bad codes
                 break
             users += step

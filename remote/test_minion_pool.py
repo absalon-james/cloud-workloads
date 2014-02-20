@@ -2,11 +2,12 @@ import unittest
 import uuid
 
 from pool import MinionPool, NoAvailableMinionException, LockedPoolException
-from minion import Minion
+
 
 class FakeMinion(object):
     def __init__(self):
         self.id_ = str(uuid.uuid4())
+
 
 class TestMinionPool(unittest.TestCase):
 
@@ -21,17 +22,15 @@ class TestMinionPool(unittest.TestCase):
 
     def test_empty_get(self):
         pool = MinionPool([])
-        
         with self.assertRaises(NoAvailableMinionException):
-            minion1 = pool.get_minion()
+            pool.get_minion()
 
     def test_get_no_wait(self):
-        
         pool = MinionPool([])
         pool._lock.acquire()
         try:
             with self.assertRaises(LockedPoolException):
-                minion = pool.get_minion(blocking=False)
+                pool.get_minion(blocking=False)
         finally:
             pool._lock.release()
 
@@ -60,11 +59,12 @@ class TestMinionPool(unittest.TestCase):
         reservations = {
             role1: [minion2.id_]
         }
-        pool = MinionPool([minion1, minion2, minion3], reservations=reservations)
+        pool = MinionPool([minion1, minion2, minion3],
+                          reservations=reservations)
         m1 = pool.get_minion(role=role1)
         self.assertEquals(minion2.id_, m1.id_)
         with self.assertRaises(NoAvailableMinionException):
-            m2 = pool.get_minion(role=role1)
+            pool.get_minion(role=role1)
 
     def test_put_no_wait(self):
         minion1 = FakeMinion()

@@ -1,5 +1,6 @@
 from operator import attrgetter
 
+
 class Action(list):
     """
     Base class for modeling an action in the gatling simulation.log.
@@ -292,7 +293,6 @@ class Stats(dict):
                 if time >= session.start_time and time <= session.end_time:
                     total += 1
                 return total
-            sessions = reduce(active, self.scenarios, 0)
             points.append({'x': time, 'y': reduce(active, self.scenarios, 0)})
         return points
 
@@ -329,11 +329,13 @@ class Stats(dict):
             line = line.strip("\n").split("\t")
             if line[0] in self._actions:
                 self._actions[line[0]].append(
-                  self._action_classes[line[0]](line))
+                    self._action_classes[line[0]](line))
 
-        self.end_time = max(self.scenarios, key=attrgetter("end_time")).end_time
-        self.start_time = min(self.scenarios, key=attrgetter("start_time")).end_time
-        
+        self.end_time = max(self.scenarios,
+                            key=attrgetter("end_time")).end_time
+
+        self.start_time = min(self.scenarios,
+                              key=attrgetter("start_time")).end_time
 
     def __init__(self):
         """
