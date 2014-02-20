@@ -7,6 +7,7 @@ from common.workload import Workload
 from remote.client import Client
 from remote.credentials import Pam
 from remote.pool import MinionPool
+from remote.event import EventStore, JobPoller
 import traceback
 
 
@@ -65,39 +66,51 @@ class Runner(object):
         Runs workloads according to the config
 
         """
+        event_store = EventStore()
+        job_poller = JobPoller(event_store)
+
         # Set up the salt client
-        client = Client(self.credentials)
+        client = Client(event_store, credentials=self.credentials)
+
 
         # Set up the minion pool
         pool_config = self.config.get_minion_pool()
-        minions = client.minions(pool_config['target'], pool_config['expr_form'])
-        pool = MinionPool(minions)
 
-        for name, workload_config in self.config.iter_workloads():
-            class_name = workload_config.get('workload')
-            workload_class = load_workload_class(class_name)
-            workload = workload_class(client, pool, workload_config)
+        try:
+            job_poller.start()
+            minions = client.minions(pool_config['target'], pool_config['expr_form'])
+            pool = MinionPool(minions)
 
-            print "-".ljust(80, '-')
-            print ("---- Running workload %s " % workload.name).ljust(80, '-')
-            print "-".ljust(80, '-')
+            for name, workload_config in self.config.iter_workloads():
+                class_name = workload_config.get('workload')
+                workload_class = load_workload_class(class_name)
+                workload = workload_class(client, pool, workload_config)
 
-            try:
-                workload.deploy()
-                workload.run()
-            except Exception, e:
-                # @TODO Do something with the exception
-                print "Something happened when running workload: %s" % name
-                print e
-                print traceback.print_exc()
-                pass
-            finally:
-                workload.undeploy()
+                print "-".ljust(80, '-')
+                print ("---- Running workload %s " % workload.name).ljust(80, '-')
+                print "-".ljust(80, '-')
+
+                try:
+                    workload.deploy()
+                    workload.run()
+                except Exception, e:
+                    # @TODO Do something with the exception
+                    print "Something happened when running workload: %s" % name
+                    print e
+                    print traceback.print_exc()
+                    pass
+                finally:
+                    workload.undeploy()
         
-            if (workload.is_primitive):
-                self.primitives = workload
-            else:
-                self.workloads.append(workload)
+                if (workload.is_primitive):
+                    self.primitives = workload
+                else:
+                    self.workloads.append(workload)
+        finally:
+            print "Stopping the job poller"
+            job_poller.signal_stop()
+            job_poller.join()
+            print "Job poller stopped"
 
     def view(self):
         """

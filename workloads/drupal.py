@@ -33,6 +33,24 @@ class Workload(GatlingWorkload):
         'users_step': '25'
     }
 
+    DEPLOY_SEQUENCE = [
+        {
+         'state': 'drupal.db_master', 
+         'next': {
+            'state': 'drupal.db_slave'
+            }
+        },
+        {'state': 'drupal.web'},
+        {'state': 'drupal.gatling'}
+    ]
+
+    UNDEPLOY_SEQUENCE = [
+        {'state': 'drupal.antidb_master'},
+        {'state': 'drupal.antidb_slave'},
+        {'state': 'drupal.antiweb'},
+        {'state': 'drupal.antigatling'}
+    ]
+
     @property
     def name(self):
         """

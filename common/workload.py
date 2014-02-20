@@ -108,25 +108,62 @@ class Workload(object):
         the minion.
 
         """
+        minion_sets = []
+        role_sets = []
         for instance in self.instances:
             minion = instance.get('minion')
             roles = set(minion.roles or [])
             for role in instance.get('roles', []):
                 roles.add(role)
             roles = list(roles)
-            self.client.set_roles(minion, roles)
+            minion_sets.append([minion])
+            role_sets.append(roles)
+        self.client.set_roles(minion_sets, role_sets, timeout=30)
+
+    def deploy_plan(self, deploy=True):
+        if deploy:
+            deploy_sequence = self.DEPLOY_SEQUENCE
+            states_key = 'states'
+            
+        else:
+            deploy_sequence = self.UNDEPLOY_SEQUENCE
+            states_key = 'antistates'
+        cmds = []
+        for sequence in deploy_sequence:
+            chain = None
+            while True:
+                state = sequence['state']
+                minions = []
+                for instance in self.instances:
+                    if state in instance[states_key]:
+                        minions.append(instance['minion'])
+                cmd = self.client.prepare_cmd_state(minions, state, sync=True)
+                if chain:
+                    chain.link(cmd)
+                else:
+                    chain = cmd
+                if not sequence.has_key('next'):
+                    break
+                sequence = sequence['next']
+            cmds.append(chain)
+        return cmds
 
     def apply_states(self):
         """
         Applies states to the minions as decribed by each minion's instance.
 
         """
-        print "Applying states ..."
-        for instance in self.instances:
-            minion = instance.get('minion')
-            for state in instance.get('states', []):
-                print "'%s' to %s" % (state, minion.id_)
-                result = self.client.apply_state(minion, state)
+
+        cmds = self.deploy_plan()
+        resp = self.client.run_multi(cmds)
+        # TODO - validate the response
+
+        #print "Applying states ..."
+        #for instance in self.instances:
+        #    minion = instance.get('minion')
+        #    for state in instance.get('states', []):
+        #        print "'%s' to %s" % (state, minion.id_)
+        #        result = self.client.apply_state(minion, state)
 
     def remove_states(self):
         """
@@ -134,15 +171,17 @@ class Workload(object):
         instance.
 
         """
-        print "Removing states ..."
-        for instance in self.instances:
-            minion = instance.get('minion')
-            for state in instance.get('antistates', []):
-                try:
-                    print "'%s' to %s" % (state, minion.id_)
-                    result = self.client.apply_state(minion, state)
-                except Exception as e:
-                    print e
+        cmds = self.deploy_plan(deploy=False)
+        resp = self.client.run_multi(cmds)
+        #print "Removing states ..."
+        #for instance in self.instances:
+        #    minion = instance.get('minion')
+        #    for state in instance.get('antistates', []):
+        #        try:
+        #            print "'%s' to %s" % (state, minion.id_)
+        #            result = self.client.apply_state(minion, state)
+        #        except Exception as e:
+        #            print e
                 
 
     def remove_roles(self):
@@ -151,14 +190,18 @@ class Workload(object):
         Roles used in an instance are removed from the instance.
 
         """
+        minion_sets = []
+        role_sets = []
         for instance in self.instances:
             minion = instance.get('minion')
-            roles = set(minion.roles)
+            roles = set(minion.roles or [])
             for role in instance.get('roles', []):
                 if role in roles:
                     roles.remove(role)
             roles = list(roles)            
-            self.client.set_roles(minion, roles)
+            role_sets.append(roles)
+            minion_sets.append([minion])
+        self.client.set_roles(minion_sets, role_sets, timeout=30)
 
     def return_minions(self):
         """
