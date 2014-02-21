@@ -3,34 +3,6 @@ from itertools import izip
 from job import MultiJob, SaltJob
 
 
-class SaltStateException(Exception):
-    """
-    Exception for when a call to state.sls is not completely successful.
-    """
-
-    def __init__(self, state, failures):
-        """
-        Initializes the exception.
-
-        @param failures: List consisting of tuples and/or lists Tuples should
-            be of the form:
-            (minion id, state id, state, state function, comment)
-
-        """
-        msg = self.make_msg(state, failures)
-        super(SaltStateException, self).__init__(msg)
-
-    def make_msg(self, state, failures):
-        msg = ("State '%s' was unable to be applied due to the following"
-               " reasons: \n%s\n")
-        return msg % (state, "\n".join(self.failure_str(f) for f in failures))
-
-    def failure_str(self, failure):
-        if isinstance(failure, list):
-            return "\n".join([i for i in failure])
-        return "%s --- %s --- %s" % (failure[0], failure[4], failure[5])
-
-
 class Client(object):
     """Provides an interface for dealing with the salt local client."""
 
@@ -179,7 +151,9 @@ class Client(object):
                        'fun': 'state.sls',
                        'expr_form': 'list',
                        'arg': [state]})
-        state_job = SaltJob(kwargs)
+        state_job = SaltJob(kwargs, retcodes=set([0,2]))
+
+        # Optionally sync for custom states
         if sync:
             ret = self.prepare_job_sync_states(minions)
             ret.link(state_job)
@@ -187,7 +161,7 @@ class Client(object):
             ret = state_job
         return ret
 
-    def prepare_job(self, minions, func, **kwargs):
+    def prepare_job(self, minions, func, retcodes=None, **kwargs):
         """
         Prepares a salt command that runs the requested salt function.
         All other commands can probably wrap this command.
@@ -196,6 +170,7 @@ class Client(object):
 
         @param minions - single minion, list of minions, or string
 '       @param func - String indicating salt method to run
+        @param retcodes - Set of acceptable integer return codes
         @return SaltJob
 
         """
@@ -205,7 +180,7 @@ class Client(object):
                        'tgt': target,
                        'fun': func,
                        'expr_form': 'list'})
-        return SaltJob(kwargs)
+        return SaltJob(kwargs, retcodes=retcodes)
 
     def minions(self, target='*', expr_form='glob', **kwargs):
         """
@@ -216,18 +191,27 @@ class Client(object):
         @return List of minions
 
         """
-        jobs = MultiJob(self.event_store)
         job = self.prepare_job_minions(target, expr_form)
-        if (jobs.add(job)):
-            timeout = job.kwargs.get('timeout') or 60
-            resp = jobs.wait(timeout)
-            # Only one job so take the first
-            resp = resp.values()[0]
+        resp = self.run_jobs([job], job.kwargs.get('timeout') or 60)
+        # Only one job so take the first
+        resp = resp.values()[0]
 
         # Create minion model for all returned grains
         return [Minion(grains) for id_, grains in resp.iteritems()]
 
-    def run_multi(self, jobs, timeout=3600):
+    def run_jobs(self, jobs, timeout=3600):
+        """
+        Runs multiple jobs or a single job.
+
+        @param jobs - Single SaltJob or a list of SaltJobs
+        @param timeout - Integer number of seconds to wait for all jobs
+            to complete
+
+        """
+        # Convert to list if given single job
+        if isinstance(jobs, SaltJob):
+            jobs = [jobs]
+
         multi = MultiJob(self.event_store)
         for job in jobs:
             multi.add(job)
@@ -247,7 +231,7 @@ class Client(object):
         jobs = []
         for minions, roles in izip(minion_sets, role_sets):
             jobs.append(self.prepare_job_set_grain(minions, 'roles', roles))
-        multi_resp = self.run_multi(jobs, timeout)
+        multi_resp = self.run_jobs(jobs, timeout)
 
         # Get a unique set of minions
         all_minions = set()
@@ -271,16 +255,16 @@ class Client(object):
         @return - dict
 
         """
-        timeout = kwargs.get('timeout' or 3600)
+        timeout = kwargs.get('timeout') or 3600
         jobs = [self.prepare_job(minions, func, **kwargs)]
-        resp = self.run_multi(jobs, timeout)
+        resp = self.run_jobs(jobs, timeout)
         return resp.values()[0]
 
     def job(self, minions, func, **kwargs):
         """
-        Wrapper for super.run_job.  Updates kwargs with credentials.
+        Fires off a job asynchronously and doesn't care/know about the
+        result.
 
-        @param target - Salt minion target
         @param func - Salt function - 'pillar.get', 'network.ipaddrs', etc.
         """
         multi = MultiJob(self.event_store)
@@ -298,7 +282,7 @@ class Client(object):
 
         """
         jobs = [self.prepare_job_pillar_get(minions, what, default)]
-        resp = self.run_multi(jobs, kwargs.get('timeout') or 60)
+        resp = self.run_jobs(jobs, kwargs.get('timeout') or 60)
         return resp.values()[0]
 
     def get_ips(self,
@@ -331,7 +315,7 @@ class Client(object):
         if len(unique_interfaces) == 1:
             jobs = [self.prepare_job_network_ipaddrs(target,
                                                    unique_interfaces.pop())]
-            ret = self.run_multi(jobs, kwargs.get('timeout') or 60)
+            ret = self.run_jobs(jobs, kwargs.get('timeout') or 60)
             ret = ret.values()[0]
 
         # Otherwise we have to iterate
@@ -342,7 +326,7 @@ class Client(object):
             for minion_id, interface in interface_dict:
                 jobs.append(
                     self.prepare_job_network_ipaddrs(minion_id, interface))
-            resp = self.run_multi(jobs, kwargs.get('timeout') or 60)
+            resp = self.run_jobs(jobs, kwargs.get('timeout') or 60)
             for jid, job_ret in resp:
                 ret.update(job_ret)
         return ret

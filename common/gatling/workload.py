@@ -1,7 +1,5 @@
 import cStringIO
-
 from common.workload import Workload as BaseWorkload
-
 from result import GatlingStdoutParser, GatlingResult
 from stats import Stats
 
@@ -163,7 +161,11 @@ class Workload(BaseWorkload):
 
             # Execution response (still have to make another request to
             # get the simulation.log file contents)
-            exe_resp = self.client.cmd(runners[0].id_, 'cmd.run_all', **kwargs)
+            retcodes = set([0, 2])
+            exe_resp = self.client.cmd(runners[0].id_,
+                                       'cmd.run_all',
+                                       retcodes=retcodes,
+                                       **kwargs)
             exe_resp = exe_resp.values()[0]
             retcode = exe_resp.get('retcode')
             stdout = exe_resp.get('stdout')
@@ -189,13 +191,7 @@ class Workload(BaseWorkload):
             stats = Stats()
             stats.update(stdout)
             result.update({'stats': stats})
-
             self._results.append(result)
-
-            # Check process codes.
-            # 0 = success
-            # 2 = Gatling worked but at least one assertion failed
             if retcode not in [0, 2] or not result.success:
-                # @TODO handle bad codes
                 break
             users += step
