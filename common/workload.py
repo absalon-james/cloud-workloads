@@ -47,18 +47,30 @@ class Workload(object):
     def undeploy(self):
         """
         Undeploys the workload. Applies anti-states to minions. Removes added
-        roles from minions. Returns minions to the minion pool.
+        roles from minions. Returns minions to the minion pool.  Tries to
+        always remove roles and return minions to the pool even if removing
+        states fail.
+        @TODO - Clean this up - not too fond of double try/excepts
 
         """
+        ret = True
         try:
             self.remove_states()
-            self.remove_roles()
-            self.return_minions()
-        except Exception, e:
-            print "Something happened while undeploying"
+        except Exception as e:
+            print "Something happened while undeploying states"
             print e
             # TODO some sort of warning or log for when undeploy fails.
-            return False
+            ret = False
+
+        try:
+            self.remove_roles()
+        except Exception as e:
+            print "Something happened while undeploying roles"
+            print e
+            ret = False
+
+        # Always return the minions
+        self.return_minions()
         return True
 
     def minions_with_role(self, role):
@@ -161,7 +173,7 @@ class Workload(object):
         """
 
         cmds = self.deploy_plan()
-        self.client.run_multi(cmds)
+        self.client.run_jobs(cmds)
 
     def remove_states(self):
         """
@@ -170,7 +182,7 @@ class Workload(object):
 
         """
         cmds = self.deploy_plan(deploy=False)
-        self.client.run_multi(cmds)
+        self.client.run_jobs(cmds)
 
     def remove_roles(self):
         """

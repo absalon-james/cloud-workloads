@@ -74,7 +74,7 @@ class Workload(GatlingWorkload):
             'response_times_plot': run['stats'].response_times_plot
         }
         view_dict['active_sessions_per_second_plot'] = \
-            run['stats'].sessions_per_second_plot,
+            run['stats'].sessions_per_second_plot
 
         view = View('drupal.html', view_dict)
         return view
