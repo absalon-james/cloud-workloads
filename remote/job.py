@@ -2,7 +2,8 @@ import os
 import salt
 import time
 from salt.client.api import APIClient
-from handler import Handler, UnfinishedException, UnsuccessfulException, RetcodeException, FailedStateSlsException
+from handler import Handler, UnfinishedException, UnsuccessfulException, \
+    RetcodeException, FailedStateSlsException
 
 MASTER_CONFIG_PATH = os.environ.get('SALT_MASTER_CONFIG', '/etc/salt/master')
 MASTER_OPTIONS = salt.config.master_config(MASTER_CONFIG_PATH)
@@ -107,7 +108,7 @@ class SaltJob(object):
 
         @param pub_data - Dictionary containing affected minion ids and a jid
             or an empty dict representing a publish failure
-        """        
+        """
         # Check for bad publish, emit any output
         self.handler.handle_publish(self, pub_data)
 
@@ -221,6 +222,30 @@ class MultiJob(object):
         """
         return all([job.is_finished() for job in self._jobs.itervalues()])
 
+    def should_process_event(self, event):
+        """
+        Checks whether or not we need to process an event.
+        Events should have a jid and a return.
+        The jid should be a job belonging to this MultiJob
+        The job should not be finished yet.
+
+        @param event - Dictionary representing an event.
+        @return Boolean True for yes, False otherwise.
+
+        """
+        jid = event.get('jid')
+        ret = event.get('return')
+        if jid is None or ret is None:
+            return False
+
+        if jid not in self._jobs:
+            return False
+
+        job = self._jobs[jid]
+        if job.is_finished():
+            return False
+        return True
+
     def wait(self, timeout):
         """
         Waits for all jobs so far to be finished. If a job finishes that is
@@ -240,18 +265,16 @@ class MultiJob(object):
             if time.time() > timeout_at:
                 break
 
-            # Listen for all events. Have multiple jids that should be returning
+            # Listen for all events with tag set to ''.
+            # Need to be able to listen for multiple jobs.
             event = self.client.get_event(tag='', wait=0.25)
 
             # Check for no event received
             if event is None:
                 continue
 
-            jid = event.get('jid')
-            ret = event.get('return')
-
-            if jid is not None and ret is not None and jid in self._jobs and not self._jobs[jid].is_finished():
-                job = self._jobs[jid]
+            if self.should_process_event(event):
+                job = self._jobs[event.get('jid')]
                 job.add_minion_return(event)
                 if job.is_finished():
                     self.handler.handle_finish(job)
@@ -262,12 +285,15 @@ class MultiJob(object):
             if self.is_finished():
                 break
 
-        errors = []        
+        errors = []
         # Validate our jobs
         for jid, job in self._jobs.iteritems():
             try:
                 job.validate()
-            except (UnfinishedException, UnsuccessfulException, RetcodeException, FailedStateSlsException) as e:
+            except (UnfinishedException,
+                    UnsuccessfulException,
+                    RetcodeException,
+                    FailedStateSlsException) as e:
                 errors.append(e)
         if errors:
             raise MultiJobException(errors)

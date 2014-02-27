@@ -17,7 +17,7 @@ class BaseJobException(Exception):
         if affected_msg:
             msg += "\n" + affected_msg
         super(Exception, self).__init__(msg)
-    
+
     def get_affected_msg(self, job):
         """
         Creates a newline/tab delimited list of affected SaltJob's
@@ -56,7 +56,7 @@ class BaseJobException(Exception):
         # The job wasn't even published.
         else:
             msg = ("Job %s with args %s to minions %s may not have"
-                   " started" ) % msg_tuple
+                   " started") % msg_tuple
         return msg
 
 
@@ -169,11 +169,12 @@ class RetcodeException(BaseJobException):
                                           event['retcode'],
                                           event['return'])
 
+
 class FailedStateSlsException(BaseJobException):
     """
     Special exception for when not everything in a return to the salt function
     state.sls is not a success.
-  
+
     """
     def make_msg(self, job):
         """
@@ -268,28 +269,34 @@ class Handler(object):
 
         """
         kwargs = job.kwargs
-        print "Job %s: Applying %s to %s" % (pub_data['jid'], kwargs['arg'][0], pub_data['minions'])
+        msg_tuple = (pub_data['jid'], pub_data['minions'], kwargs['arg'][0])
+        print "Job %s: %s - Applying %s " % msg_tuple
 
     def report_publish_sync_state(self, job, pub_data):
         """
         Report publisher for saltutil.sync_states
-        
+
         @param job - SaltJob
         @param pub_data - Dictionary containing job id and minions
 
         """
-        print "Job %s: Syncing state for %s" % (pub_data['jid'], pub_data['minions'])
+        msg_tuple = (pub_data['jid'], pub_data['minions'])
+        print "Job %s: %s - Syncing states" % msg_tuple
 
     def report_publish_cmd_run(self, job, pub_data):
         """
         Report publisher for cmd.run, cmd.run_all
-        
+
         @param job - SaltJob
         @param pub_data - Dictionary containing job id and minions
 
         """
-        msg_tuple = (job.kwargs['arg'][0], pub_data['minions'])
-        print "Running cmd %s on minions: %s" % msg_tuple
+        msg_tuple = (
+            pub_data['jid'],
+            pub_data['minions'],
+            job.kwargs['arg'][0]
+        )
+        print "Job %s: %s - Running: %s" % msg_tuple
 
     ##########################################################
     #### Finishers ###########################################
@@ -311,8 +318,8 @@ class Handler(object):
         @param job - SaltJob
 
         """
-        msg_tuple = (job.jid, job.kwargs['arg'][0], list(job.minions))
-        print "Job %s: Finished applying state %s to minions: %s" % (msg_tuple)
+        msg_tuple = (job.jid, list(job.minions), job.kwargs['arg'][0])
+        print "Job %s: %s - Applied state %s" % (msg_tuple)
 
     def report_finish_sync_state(self, job):
         """
@@ -321,7 +328,7 @@ class Handler(object):
         @param job - SaltJob
 
         """
-        print "Job %s: %s now synced" % (job.jid, list(job.minions))
+        print "Job %s: %s - States synced" % (job.jid, list(job.minions))
 
     def report_finish_cmd_run(self, job):
         """
@@ -329,9 +336,9 @@ class Handler(object):
 
         @param job - SaltJob
         """
-        msg_tuple = (job.kwargs['arg'][0], list(job.minions))
-        print "Finished running %s on minions %s" % msg_tuple
-    
+        msg_tuple = (job.jid, list(job.minions), job.kwargs['arg'][0])
+        print "Job %s: %s - Finished running: %s" % msg_tuple
+
     ##########################################################
     #### Handlers ############################################
     ##########################################################

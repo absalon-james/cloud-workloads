@@ -2,13 +2,13 @@ minion_pool:
   target: '*'
   expr_form: 'glob'
 
-primitives:
-  workload: primitives
-  instances:
-    - roles:
-        - primitives
-    - roles:
-        - primitives_target
+#primitives:
+#  workload: primitives
+#  instances:
+#    - roles:
+#        - primitives
+#    - roles:
+#        - primitives_target
 
 #standard_hadoop:
 #  workload: hadoop
@@ -46,17 +46,17 @@ primitives:
 #    - roles:
 #        - magento_gatling
 
-#standard_drupal:
-#  workload: drupal
-#  duration: 30
-#  users_start: 500
-#  users_step: 200
-#  instances:
-#    - roles:
-#        - drupal_mysql_master
-#    - roles:
-#        - drupal_mysql_slave
-#    - roles:
-#        - drupal_web
-#    - roles:
-#        - drupal_gatling
+standard_drupal:
+  workload: drupal
+  duration: 30
+  users_start: 500
+  users_step: 200
+  instances:
+    - roles:
+        - drupal_mysql_master
+    - roles:
+        - drupal_mysql_slave
+    - roles:
+        - drupal_web
+    - roles:
+        - drupal_gatling

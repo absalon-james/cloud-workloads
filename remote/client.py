@@ -150,7 +150,7 @@ class Client(object):
                        'fun': 'state.sls',
                        'expr_form': 'list',
                        'arg': [state]})
-        state_job = SaltJob(kwargs, retcodes=set([0,2]))
+        state_job = SaltJob(kwargs, retcodes=set([0, 2]))
 
         # Optionally sync for custom states
         if sync:
@@ -313,7 +313,7 @@ class Client(object):
             set([i for minion_id, i in interface_dict.iteritems()])
         if len(unique_interfaces) == 1:
             jobs = [self.prepare_job_network_ipaddrs(target,
-                                                   unique_interfaces.pop())]
+                                                     unique_interfaces.pop())]
             ret = self.run_jobs(jobs, kwargs.get('timeout') or 60)
             ret = ret.values()[0]
 
@@ -321,7 +321,6 @@ class Client(object):
         else:
             ret = {}
             jobs = []
-            multi = MultiJob()
             for minion_id, interface in interface_dict:
                 jobs.append(
                     self.prepare_job_network_ipaddrs(minion_id, interface))
