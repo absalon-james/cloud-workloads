@@ -188,15 +188,12 @@ class SaltJob(object):
 
 class MultiJob(object):
 
-    def __init__(self, event_store):
+    def __init__(self):
         """
         MultiJob constructor
 
-        @param event_store - Managed dict proxy object that a job poller
-                             stores events into
         """
         self._jobs = {}
-        self.event_store = event_store
         self.client = APIClient(opts=MASTER_OPTIONS)
         self.handler = Handler()
 
@@ -213,7 +210,6 @@ class MultiJob(object):
         """
         pub_data = self.client.run(job.kwargs)
         job.set_pub_data(pub_data)
-        # Set pub data will raise a PublishException on a failure
         self._jobs[job.jid] = job
 
     def is_finished(self):
@@ -239,34 +235,32 @@ class MultiJob(object):
         start = time.time()
         timeout_at = start + timeout
         while True:
-            for jid, job in self._jobs.items():
 
-                # Stop looking if the job is finished
-                if job.is_finished():
-                    continue
-
-                # Check the event store
-                raw = self.event_store.get_event(jid)                
-                job.add_minion_return(raw)
-
-                # Check again - A finished job will only go through this
-                # branch once. Check for the next job in sequence at this
-                # point
-                if job.is_finished():
-                    self.handler.handle_finish(job)
-                    if job.chain:
-                        self.add(job.chain)                   
-
-            # Check to see if all jobs have finished
-            if self.is_finished():
-                break
-
-            # Check for timeout
+            # Break on timeout
             if time.time() > timeout_at:
                 break
 
-            # Delay a bit before checking again
-            time.sleep(0.05)
+            # Listen for all events. Have multiple jids that should be returning
+            event = self.client.get_event(tag='', wait=0.25)
+
+            # Check for no event received
+            if event is None:
+                continue
+
+            jid = event.get('jid')
+            ret = event.get('return')
+
+            if jid is not None and ret is not None and jid in self._jobs and not self._jobs[jid].is_finished():
+                job = self._jobs[jid]
+                job.add_minion_return(event)
+                if job.is_finished():
+                    self.handler.handle_finish(job)
+                    if job.chain:
+                        self.add(job.chain)
+
+            # Break on all jobs finished
+            if self.is_finished():
+                break
 
         errors = []        
         # Validate our jobs

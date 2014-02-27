@@ -6,7 +6,7 @@ from job import MultiJob, SaltJob
 class Client(object):
     """Provides an interface for dealing with the salt local client."""
 
-    def __init__(self, event_store, credentials=None):
+    def __init__(self, credentials=None):
         """
         Initializes the client.
         @TODO - Allow salt options to be passed via argument
@@ -15,7 +15,6 @@ class Client(object):
             invocation
 
         """
-        self.event_store = event_store
         if credentials is None:
             credentials = {}
         self._credentials = credentials
@@ -212,7 +211,7 @@ class Client(object):
         if isinstance(jobs, SaltJob):
             jobs = [jobs]
 
-        multi = MultiJob(self.event_store)
+        multi = MultiJob()
         for job in jobs:
             multi.add(job)
         resp = multi.wait(timeout)
@@ -267,7 +266,7 @@ class Client(object):
 
         @param func - Salt function - 'pillar.get', 'network.ipaddrs', etc.
         """
-        multi = MultiJob(self.event_store)
+        multi = MultiJob()
         job = self.prepare_job(minions, func, **kwargs)
         return multi.add(job)
 
@@ -322,7 +321,7 @@ class Client(object):
         else:
             ret = {}
             jobs = []
-            multi = MultiJob(self.event_store)
+            multi = MultiJob()
             for minion_id, interface in interface_dict:
                 jobs.append(
                     self.prepare_job_network_ipaddrs(minion_id, interface))

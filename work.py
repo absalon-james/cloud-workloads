@@ -6,7 +6,6 @@ from common.view import View
 from remote.client import Client
 from remote.credentials import Pam
 from remote.pool import MinionPool
-from remote.event import EventStore, JobPoller
 from remote.job import MultiJobException
 import traceback
 
@@ -68,17 +67,13 @@ class Runner(object):
         runs workloads as described in the config.
 
         """
-        event_store = EventStore()
-        job_poller = JobPoller(event_store)
-
         # Set up the salt client
-        client = Client(event_store, credentials=self.credentials)
+        client = Client(credentials=self.credentials)
 
         # Set up the minion pool
         pool_config = self.config.get_minion_pool()
 
         try:
-            job_poller.start()
             minions = client.minions(pool_config['target'],
                                      pool_config['expr_form'])
             pool = MinionPool(minions)
@@ -102,12 +97,6 @@ class Runner(object):
         except Exception as e:
             print "Stopping due to exception"
             traceback.print_exc()
-            
-        print "Stopping the job poller."
-        job_poller.signal_stop()
-        if job_poller.is_alive():
-            job_poller.join()
-        print "Job poller stopped."
 
     def run_workload(self, workload):
         """
