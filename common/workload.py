@@ -1,6 +1,3 @@
-import errno
-
-
 class Workload(object):
     """
     Class that handles a cloud workload.  A workload should consist
@@ -59,29 +56,14 @@ class Workload(object):
         ret = True
         try:
             self.remove_states()
-
-        # Catch broken pipes here. Job poller may have stopped
-        except IOError as e:
-            if e.errno == errno.EPIPE:
-                print "Job poller may have already stopped."
-                return False
-
         except Exception as e:
             print "Something happened while undeploying states"
             print e
             # TODO some sort of warning or log for when undeploy fails.
             ret = False
-        
 
         try:
             self.remove_roles()
-
-        # Catch broken pipes here. Job poller may have stopped
-        except IOError as e:
-            if e.errno == errno.EPIPE:
-                print "Job poller may have already stopped."
-                return False
-
         except Exception as e:
             print "Something happened while undeploying roles"
             print e
@@ -89,7 +71,7 @@ class Workload(object):
 
         # Always return the minions when there hasn't been a broken pipe
         self.return_minions()
-        return True
+        return ret
 
     def minions_with_role(self, role):
         """

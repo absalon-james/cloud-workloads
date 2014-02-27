@@ -94,7 +94,7 @@ class Runner(object):
                    " cloud workloads on the minions.")
             exit()
 
-        except Exception as e:
+        except Exception:
             print "Stopping due to exception"
             traceback.print_exc()
 
