@@ -7,6 +7,7 @@ from remote.client import Client
 from remote.credentials import Pam
 from remote.pool import MinionPool
 from remote.event import EventStore, JobPoller
+from remote.job import MultiJobException
 import traceback
 
 
@@ -63,7 +64,8 @@ class Runner(object):
 
     def run(self):
         """
-        Runs workloads according to the config
+        Sets up the salt client, builds the minion pool and then
+        runs workloads as described in the config.
 
         """
         event_store = EventStore()
@@ -85,33 +87,51 @@ class Runner(object):
                 class_name = workload_config.get('workload')
                 workload_class = load_workload_class(class_name)
                 workload = workload_class(client, pool, workload_config)
-
-                print "-".ljust(80, '-')
-                title = ("---- Running workload %s " % workload.name)
-                print title.ljust(80, '-')
-                print "-".ljust(80, '-')
-
-                try:
-                    workload.deploy()
-                    workload.run()
-                except Exception, e:
-                    # @TODO Do something with the exception
-                    print "Something happened when running workload: %s" % name
-                    print e
-                    print traceback.print_exc()
-                    pass
-                finally:
-                    workload.undeploy()
+                self.run_workload(workload)
 
                 if (workload.is_primitive):
                     self.primitives = workload
                 else:
                     self.workloads.append(workload)
-        finally:
-            print "Stopping the job poller"
-            job_poller.signal_stop()
+
+        except KeyboardInterrupt:
+            print ("Exit requested. !!Warning, there may be left over"
+                   " cloud workloads on the minions.")
+            exit()
+
+        except Exception as e:
+            print "Stopping due to exception"
+            traceback.print_exc()
+            
+        print "Stopping the job poller."
+        job_poller.signal_stop()
+        if job_poller.is_alive():
             job_poller.join()
-            print "Job poller stopped"
+        print "Job poller stopped."
+
+    def run_workload(self, workload):
+        """
+        Deploys, Runs, then Undeploys the workload
+
+        @param workload - An object that subclasses workload
+
+        """
+        # Simple display output to help break up wall of text
+        print "-".ljust(80, '-')
+        title = ("---- Running workload %s " % workload.name)
+        print title.ljust(80, '-')
+        print "-".ljust(80, '-')
+
+        try:
+            workload.deploy()
+            workload.run()
+
+        # Catch salt job related exceptions
+        except MultiJobException as e:
+            print e
+
+        finally:
+            workload.undeploy()
 
     def view(self):
         """

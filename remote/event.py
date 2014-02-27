@@ -110,18 +110,22 @@ class JobPoller(Process):
 
         """
         client = APIClient(opts=MASTER_OPTIONS)
-        while True:
-            event = client.get_event(tag='', wait=self.event_wait)
+        try:
+            while True:
+                # Break if signalled to stop
+                if self.should_stop():
+                    break
 
-            # Continue if no event was found
-            if event is None:
-                continue
+                event = client.get_event(tag='', wait=self.event_wait)
 
-            jid = event.get('jid')
-            ret = event.get('return')
-            if jid is not None and ret is not None:
-                self.event_store.store_event(jid, event)
+                # Continue if no event was found
+                if event is None:
+                    continue
 
-            # Break if signalled to stop
-            if self.should_stop():
-                break
+                jid = event.get('jid')
+                ret = event.get('return')
+                if jid is not None and ret is not None:
+                    self.event_store.store_event(jid, event)
+
+        except KeyboardInterrupt:
+            pass

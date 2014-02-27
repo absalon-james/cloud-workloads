@@ -268,7 +268,7 @@ class Handler(object):
 
         """
         kwargs = job.kwargs
-        print "Applying %s to %s" % (kwargs['arg'][0], pub_data['minions'])
+        print "Job %s: Applying %s to %s" % (pub_data['jid'], kwargs['arg'][0], pub_data['minions'])
 
     def report_publish_sync_state(self, job, pub_data):
         """
@@ -278,7 +278,7 @@ class Handler(object):
         @param pub_data - Dictionary containing job id and minions
 
         """
-        print "Syncing state for %s" % pub_data['minions']
+        print "Job %s: Syncing state for %s" % (pub_data['jid'], pub_data['minions'])
 
     def report_publish_cmd_run(self, job, pub_data):
         """
@@ -311,8 +311,8 @@ class Handler(object):
         @param job - SaltJob
 
         """
-        msg_tuple = (job.kwargs['arg'][0], list(job.minions))
-        print "Finished applying state %s to minions: %s" % (msg_tuple)
+        msg_tuple = (job.jid, job.kwargs['arg'][0], list(job.minions))
+        print "Job %s: Finished applying state %s to minions: %s" % (msg_tuple)
 
     def report_finish_sync_state(self, job):
         """
@@ -321,7 +321,7 @@ class Handler(object):
         @param job - SaltJob
 
         """
-        print "%s now synced" % list(job.minions)
+        print "Job %s: %s now synced" % (job.jid, list(job.minions))
 
     def report_finish_cmd_run(self, job):
         """

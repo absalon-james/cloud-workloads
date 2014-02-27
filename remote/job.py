@@ -2,7 +2,7 @@ import os
 import salt
 import time
 from salt.client.api import APIClient
-from handler import Handler, UnfinishedException, UnsuccessfulException, RetcodeException
+from handler import Handler, UnfinishedException, UnsuccessfulException, RetcodeException, FailedStateSlsException
 
 MASTER_CONFIG_PATH = os.environ.get('SALT_MASTER_CONFIG', '/etc/salt/master')
 MASTER_OPTIONS = salt.config.master_config(MASTER_CONFIG_PATH)
@@ -273,7 +273,7 @@ class MultiJob(object):
         for jid, job in self._jobs.iteritems():
             try:
                 job.validate()
-            except (UnfinishedException, UnsuccessfulException, RetcodeException) as e:
+            except (UnfinishedException, UnsuccessfulException, RetcodeException, FailedStateSlsException) as e:
                 errors.append(e)
         if errors:
             raise MultiJobException(errors)
