@@ -228,7 +228,7 @@ class Workload(BaseWorkload):
         """
         best_run = self.best_run
 
-	top_dir = os.getcwd()
+        top_dir = os.getcwd()
         env = Environment(loader=FileSystemLoader( os.path.join(top_dir, 'views') ))
         template = env.get_template('mysql.html')
 
