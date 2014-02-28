@@ -1,8 +1,6 @@
 from common.gatling.workload import Workload as GatlingWorkload
 from common.view import View
-from jinja2 import Environment, PackageLoader, FileSystemLoader
 
-import os
 
 class Workload(GatlingWorkload):
     """
@@ -66,21 +64,22 @@ class Workload(GatlingWorkload):
         return super(Workload, self).command('magento.CheckoutSimulation')
 
     def view(self):
+        """
+        Returns an html formatted string/view for this workload.
+
+        @return - String
+        """
         run = self.best_run
-        top_dir = os.getcwd()
-        env = Environment(loader=FileSystemLoader( os.path.join(top_dir, 'views') ))
-        template = env.get_template('magento.html')
-
         active_sessions_plot = run['stats'].sessions_per_second_plot
-
-        view = template.render( users=run.users,
-				duration=run.duration,
-				mean_response_time=run.mean_response_time,
-				requests_per_second_plot=run['stats'].requests_per_second_plot,
-				active_sessions_per_second_plot=run['stats'].sessions_per_second_plot,
-				response_times_plot=run['stats'].response_times_plot
-        		      )
-        return view
+        return View(
+            'magento.html',
+            users=run.users,
+            duration=run.duration,
+            mean_response_time=run.mean_response_time,
+            requests_per_second_plot=run['stats'].requests_per_second_plot,
+            active_sessions_per_second_plot=active_sessions_plot,
+            response_times_plot=run['stats'].response_times_plot
+        )
 
 if __name__ == '__main__':
     Workload().run()

@@ -1,7 +1,6 @@
 from common.gatling.workload import Workload as GatlingWorkload
 from common.view import View
-from jinja2 import Environment, PackageLoader, FileSystemLoader
-import os
+
 
 class Workload(GatlingWorkload):
     """
@@ -66,18 +65,16 @@ class Workload(GatlingWorkload):
 
     def view(self):
         run = self.best_run
-        top_dir = os.getcwd()
-        env = Environment(loader=FileSystemLoader( os.path.join(top_dir, 'views') ))
-        template = env.get_template('drupal.html')
-
-        view = template.render( users=run.users,
-				duration=run.duration,
-				mean_response_time=run.mean_response_time,
-				requests_per_second_plot=run['stats'].requests_per_second_plot,
-				active_sessions_per_second_plot=run['stats'].sessions_per_second_plot,
-				response_times_plot=run['stats'].response_times_plot
-        		      )
-
+        active_sessions_plot = run['stats'].sessions_per_second_plot
+        view = View(
+            'drupal.html',
+            users=run.users,
+            duration=run.duration,
+            mean_response_time=run.mean_response_time,
+            requests_per_second_plot=run['stats'].requests_per_second_plot,
+            active_sessions_per_second_plot=active_sessions_plot,
+            response_times_plot=run['stats'].response_times_plot
+        )
         return view
 
 if __name__ == '__main__':

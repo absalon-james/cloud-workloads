@@ -7,7 +7,6 @@ from remote.client import Client
 from remote.credentials import Pam
 from remote.pool import MinionPool
 from remote.job import MultiJobException
-from jinja2 import Environment, PackageLoader, FileSystemLoader
 import traceback
 
 
@@ -129,13 +128,16 @@ class Runner(object):
 
         :returns: String
         """
-        top_dir = os.getcwd()
-        env = Environment(loader=FileSystemLoader( os.path.join(top_dir, 'views') ))
-        template = env.get_template('main.html')
-
-        view = template.render( workloads='<hr />'.join([w.view() for w in self.workloads]),
-				primitives=self.primitives.view() if self.primitives else ''
-        		      )
+        workload_views = '<hr />'.join([w.view() for w in self.workloads])
+        if self.primitives:
+            primitives_view = self.primitives.view()
+        else:
+            primitives_view = ''
+        view = View(
+            'main.html',
+            workloads=workload_views,
+            primitives=primitives_view
+        )
         return view
 
 

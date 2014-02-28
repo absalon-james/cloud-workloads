@@ -1,11 +1,9 @@
 import cStringIO
 import os
-
 from common.primitives.bench_analyzer import bench_analyzer
 from common.primitives.parser import io_parser, cpu_parser, network_parser
 from common.view import View
 from common.workload import Workload as BaseWorkload
-from jinja2 import Environment, PackageLoader, FileSystemLoader
 
 
 class Workload(BaseWorkload):
@@ -302,18 +300,6 @@ class Workload(BaseWorkload):
                                                network_create_score_dict,
                                                json_data=network_data)
 
-    def fake_run(self):
-        class Thing: pass
-        self.cpu_analyzer = Thing()
-        self.io_analyzer = Thing()
-        self.network_analyzer = Thing()
-        self.cpu_analyzer.overall_score = 100
-        self.io_analyzer.overall_score = 100
-        self.network_analyzer.overall_score = 100
-        self.cpu_analyzer.breakdown = "cpu_garbage"
-        self.io_analyzer.breakdown = "io_garbage"
-        self.network_analyzer.breakdown = "net_garbage"
-
     def run(self):
         """
         Runs the Primitive workload
@@ -322,7 +308,6 @@ class Workload(BaseWorkload):
         self.run_cpu()
         self.run_io()
         self.run_network()
-        #self.fake_run()
 
         #--------------------Overall Score------------------
         #Get scores for each type of test and put them together
@@ -356,20 +341,22 @@ class Workload(BaseWorkload):
                                                json_data=overall_data)
 
     def view(self):
-        top_dir = os.getcwd()
-        env = Environment(loader=FileSystemLoader( os.path.join(top_dir, 'views') ))
-        template = env.get_template('primitives.html')
+        """
+        Returns an html formatted string.
 
-        view = template.render(overall_score=int(self.overall_analyzer.overall_score),
-                        cpu_score=int(self.cpu_analyzer.overall_score),
-                        io_score=int(self.io_analyzer.overall_score),
-                        network_score=int(self.network_analyzer.overall_score),
-                        overall_breakdown=self.overall_analyzer.breakdown,
-                        cpu_breakdown=self.cpu_analyzer.breakdown,
-                        io_breakdown=self.io_analyzer.breakdown,
-                        network_breakdown=self.network_analyzer.breakdown
-                    )
-        return view
+        @return - String
+        """
+        return View(
+            'primitives.html',
+            overall_score=int(self.overall_analyzer.overall_score),
+            cpu_score=int(self.cpu_analyzer.overall_score),
+            io_score=int(self.io_analyzer.overall_score),
+            network_score=int(self.network_analyzer.overall_score),
+            overall_breakdown=self.overall_analyzer.breakdown,
+            cpu_breakdown=self.cpu_analyzer.breakdown,
+            io_breakdown=self.io_analyzer.breakdown,
+            network_breakdown=self.network_analyzer.breakdown
+        )
 
 if __name__ == '__main__':
     Workload().run()
