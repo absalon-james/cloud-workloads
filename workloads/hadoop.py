@@ -184,7 +184,7 @@ class Workload(BaseWorkload):
         terasort_reduce_tasks = \
             result['terasort'].get('Launched reduce tasks', 0)
 
-	top_dir = os.getcwd()
+        top_dir = os.getcwd()
         env = Environment(loader=FileSystemLoader( os.path.join(top_dir, 'views') ))
         template = env.get_template('hadoop.html')
 

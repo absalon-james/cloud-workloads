@@ -193,13 +193,13 @@ class Workload(BaseWorkload):
 
         return {
             'remote': {'arg': ('iperf -s',),
-                       'timeout': 500},
+                       'timeout': 360},
             'local':  {'arg': ('iperf -c %s -d' % remote_host,),
-                       'timeout': 500}
+                       'timeout': 360}
         }
 
     def run_cpu(self):
-	
+
         #--------------------CPU CMD--------------------
         runner = self.minions_with_role(self.config['runner_role'])[0]
         cpu_kwargs = self.cpu_command()
@@ -322,7 +322,7 @@ class Workload(BaseWorkload):
         self.run_cpu()
         self.run_io()
         self.run_network()
-	#self.fake_run()
+        #self.fake_run()
 
         #--------------------Overall Score------------------
         #Get scores for each type of test and put them together
@@ -356,11 +356,11 @@ class Workload(BaseWorkload):
                                                json_data=overall_data)
 
     def view(self):
-	top_dir = os.getcwd()
-	env = Environment(loader=FileSystemLoader( os.path.join(top_dir, 'views') ))
-	template = env.get_template('primitives.html')
+        top_dir = os.getcwd()
+        env = Environment(loader=FileSystemLoader( os.path.join(top_dir, 'views') ))
+        template = env.get_template('primitives.html')
 
-	view = template.render(overall_score=int(self.overall_analyzer.overall_score),
+        view = template.render(overall_score=int(self.overall_analyzer.overall_score),
                         cpu_score=int(self.cpu_analyzer.overall_score),
                         io_score=int(self.io_analyzer.overall_score),
                         network_score=int(self.network_analyzer.overall_score),
@@ -369,7 +369,7 @@ class Workload(BaseWorkload):
                         io_breakdown=self.io_analyzer.breakdown,
                         network_breakdown=self.network_analyzer.breakdown
                     )
-	return view
+        return view
 
 if __name__ == '__main__':
     Workload().run()

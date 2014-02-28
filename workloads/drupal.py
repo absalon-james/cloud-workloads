@@ -65,8 +65,8 @@ class Workload(GatlingWorkload):
         return super(Workload, self).command('drupal.UserSimulation')
 
     def view(self):
-	run = self.best_run
-	top_dir = os.getcwd()
+        run = self.best_run
+        top_dir = os.getcwd()
         env = Environment(loader=FileSystemLoader( os.path.join(top_dir, 'views') ))
         template = env.get_template('drupal.html')
 
