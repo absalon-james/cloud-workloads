@@ -3,7 +3,7 @@ import os
 import time
 from common.workload import Workload as BaseWorkload
 from common.view import View
-
+from jinja2 import Environment, PackageLoader, FileSystemLoader
 
 class TeraResult(dict):
 
@@ -184,15 +184,19 @@ class Workload(BaseWorkload):
         terasort_reduce_tasks = \
             result['terasort'].get('Launched reduce tasks', 0)
 
-        return View('hadoop.html', {
-            'numrecords': numrecords,
-            'teragen_duration': teragen_duration,
-            'teragen_map_tasks': teragen_map_tasks,
-            'terasort_duration': terasort_duration,
-            'terasort_map_tasks': terasort_map_tasks,
-            'terasort_reduce_tasks': terasort_reduce_tasks,
-            'terasort_data_points': datapoints
-        })
+	top_dir = os.getcwd()
+        env = Environment(loader=FileSystemLoader( os.path.join(top_dir, 'views') ))
+        template = env.get_template('hadoop.html')
+
+        view = template.render( numrecords=self.result['teragen'].get('Map output records', '??'),
+            			teragen_duration=teragen_duration,
+            			teragen_map_tasks=self.result['teragen'].get('Launched map tasks', 0),
+            			terasort_duration=terasort_duration,
+            			terasort_map_tasks=self.result['terasort'].get('Launched map tasks', 0),
+            			terasort_reduce_tasks=self.result['terasort'].get('Launched reduce tasks', 0),
+            			terasort_data_points=datapoints
+        		      )
+	return view
 
 if __name__ == "__main__":
     load = Workload()

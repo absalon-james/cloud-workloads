@@ -2,6 +2,8 @@ import cStringIO
 import os
 from common.workload import Workload as BaseWorkload
 from common.view import View
+from jinja2 import Environment, PackageLoader, FileSystemLoader
+#from operator import attrgetter
 
 
 class Iteration(dict):
@@ -227,11 +229,15 @@ class Workload(BaseWorkload):
         """
         best_run = self.best_run
 
-        return View('mysql.html', {
-            'tpm': best_run.get('tpm'),
-            'warehouses': best_run.get('warehouses'),
-            'tpm_plot': self.tpm_plot
-        })
+	top_dir = os.getcwd()
+        env = Environment(loader=FileSystemLoader( os.path.join(top_dir, 'views') ))
+        template = env.get_template('mysql.html')
+
+        view = template.render( tpm=best_run.get('tpm'),
+				warehouses=best_run.get('warehouses'),
+				tpm_plot=self.tpm_plot
+			      )
+	return view
 
 if __name__ == "__main__":
     load = Workload()

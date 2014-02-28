@@ -4,28 +4,28 @@ function display_breakdown(score_type) {
     var my_labels=["Overall-breakdown", "CPU-breakdown", "IO-breakdown", "Network-breakdown"];
     for(var i = 0; i < my_labels.length; i++) 
     {
-            $$("#"+my_labels[i]).css("display", "none");
+            $("#"+my_labels[i]).css("display", "none");
     }
     var id=score_type.concat("-breakdown");
-    $$("#"+id).css("display", "block");
-    $$("#breakdown-legend").html(score_type+" Breakdown");
+    $("#"+id).css("display", "block");
+    $("#breakdown-legend").html(score_type+" Breakdown");
 }
 </script>
 <legend>Your Score</legend>
     <div id="scores-chart">
         <table>
         <tr>
-            <td class="score overall" rowspan="3" id="primitives-overall" onMouseover="display_breakdown('Overall')">${overall_score}</td>
+            <td class="score overall" rowspan="3" id="primitives-overall" onMouseover="display_breakdown('Overall')">{{ overall_score }}</td>
             <td class="label individual" onMouseover="display_breakdown('CPU')">CPU</td>
-            <td class="score individual" id="primitives-cpu" onMouseover="display_breakdown('CPU')">${cpu_score}</td>
+            <td class="score individual" id="primitives-cpu" onMouseover="display_breakdown('CPU')">{{ cpu_score }}</td>
         </tr>
         <tr onMouseover="display_breakdown('IO')">
             <td class="label individual">IO</td>
-            <td class="score individual" id="primitives-io">${io_score}</td>
+            <td class="score individual" id="primitives-io">{{io_score}}</td>
         </tr>
         <tr onMouseover="display_breakdown('Network')">
             <td class="label individual">Network</td>
-            <td class="score individual" id="primitives-network">${network_score}</td>
+            <td class="score individual" id="primitives-network">{{network_score}}</td>
         </tr>
         </table>
 
@@ -33,19 +33,19 @@ function display_breakdown(score_type) {
         <legend class="breakdown" id="breakdown-legend">Score Breakdown</legend>
         <div class="breakdown" id="Overall-breakdown" style="display:none">
             <!--<table><tr><td>{overall_breakdown}</td</tr></table>-->
-	    ${overall_breakdown}
+	    {{overall_breakdown}}
         </div>
         <div class="breakdown" id="CPU-breakdown" style="display:none">
             <!--<table><tr><td>{cpu_breakdown}</td</tr></table>-->
-	    ${cpu_breakdown}
+	    {{cpu_breakdown}}
         </div>
         <div class="breakdown" id="IO-breakdown" style="display:none">
             <!--<table><tr><td>{io_breakdown}</td</tr></table>-->
-	    ${io_breakdown}
+	    {{io_breakdown}}
         </div>
         <div class="breakdown" id="Network-breakdown" style="display:none">
             <!--<table><tr><td>{network_breakdown}</td</tr></table>-->
-	    ${network_breakdown}
+	    {{network_breakdown}}
         </div>
     </div>
 

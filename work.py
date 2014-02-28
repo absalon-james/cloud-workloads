@@ -7,6 +7,7 @@ from remote.client import Client
 from remote.credentials import Pam
 from remote.pool import MinionPool
 from remote.job import MultiJobException
+from jinja2 import Environment, PackageLoader, FileSystemLoader
 import traceback
 
 
@@ -128,11 +129,14 @@ class Runner(object):
 
         :returns: String
         """
-        mapping = {
-            'workloads': '<hr />'.join([w.view() for w in self.workloads]),
-            'primitives': self.primitives.view() if self.primitives else ''
-        }
-        return View('main.html', mapping=mapping)
+	top_dir = os.getcwd()
+        env = Environment(loader=FileSystemLoader( os.path.join(top_dir, 'views') ))
+        template = env.get_template('main.html')
+
+        view = template.render( workloads='<hr />'.join([w.view() for w in self.workloads]),
+				primitives=self.primitives.view() if self.primitives else ''
+        		      )
+        return view
 
 
 def parse_args():
@@ -181,6 +185,6 @@ if __name__ == "__main__":
     try:
         with open(output_file, 'w') as f:
             f.write(runner.view())
-    except IOError:
+    except IOError as e:
         print "Unable to write results to %s." % output_file
         print e
