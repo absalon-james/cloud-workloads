@@ -4,11 +4,11 @@
         <table>
         <tr>
             <td class="score-label">NOTPM</td>
-            <td class="score-value">${tpm}</td>
+            <td class="score-value">{{tpm}}</td>
         </tr>
         <tr>
             <td class="score-label">Warehouses</td>
-            <td class="score-value">${warehouses}</td>
+            <td class="score-value">{{warehouses}}</td>
         </tr>
         </table>
     </div>
@@ -37,7 +37,7 @@
         <div class="graph" id="mysql-notpm-graph"></div>
     </div>
     <script type="text/javascript">
-    $$(function() {
+    $(function() {
 
         var graph = {
             theme: "theme1",
@@ -48,7 +48,7 @@
                 type: "spline",
                 showInLegend: true,
                 name: "NOTPM",
-                dataPoints: ${tpm_plot}
+                dataPoints: {{tpm_plot}}
             }]
         }
 
