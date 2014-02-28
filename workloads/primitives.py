@@ -303,7 +303,7 @@ class Workload(BaseWorkload):
                                                json_data=network_data)
 
     def fake_run(self):
-	class Thing: pass
+        class Thing: pass
         self.cpu_analyzer = Thing()
         self.io_analyzer = Thing()
         self.network_analyzer = Thing()
