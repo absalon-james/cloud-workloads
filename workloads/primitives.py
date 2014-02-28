@@ -5,7 +5,6 @@ from common.primitives.bench_analyzer import bench_analyzer
 from common.primitives.parser import io_parser, cpu_parser, network_parser
 from common.view import View
 from common.workload import Workload as BaseWorkload
-
 from jinja2 import Environment, PackageLoader, FileSystemLoader
 
 
@@ -200,7 +199,7 @@ class Workload(BaseWorkload):
         }
 
     def run_cpu(self):
-
+	
         #--------------------CPU CMD--------------------
         runner = self.minions_with_role(self.config['runner_role'])[0]
         cpu_kwargs = self.cpu_command()

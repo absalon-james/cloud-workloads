@@ -3,7 +3,6 @@ import os
 from common.workload import Workload as BaseWorkload
 from common.view import View
 from jinja2 import Environment, PackageLoader, FileSystemLoader
-#from operator import attrgetter
 
 
 class Iteration(dict):
