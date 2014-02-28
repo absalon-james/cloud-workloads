@@ -129,7 +129,7 @@ class Runner(object):
 
         :returns: String
         """
-	top_dir = os.getcwd()
+        top_dir = os.getcwd()
         env = Environment(loader=FileSystemLoader( os.path.join(top_dir, 'views') ))
         template = env.get_template('main.html')
 
@@ -158,7 +158,6 @@ def parse_args():
     return parser.parse_args()
 
 if __name__ == "__main__":
-<<<<<<< HEAD
     args = parse_args()
 
     # Set up credentials
@@ -170,24 +169,6 @@ if __name__ == "__main__":
     # Get the configuration
     config = YamlConfig(args.config_file)
     runner = Runner(config, credentials=credentials)
-=======
-    import ConfigParser
-
-    parser = ConfigParser.ConfigParser()
-
-    parser.add_section("config_mode")
-    parser.set("config_mode", "mode", "flat_file")
-    
-    parser.add_section("loads")
-    parser.read("config/conf.ini")
-
-    config_mode = parser.get("config_mode", "mode")
-
-    loads = [load for key, load in parser.items("loads")]
-
-    classes = load_workload_classes(loads)
-    runner = Runner(classes, config_mode)
->>>>>>> 958ed795612ae610a277477675851ae79707fdca
     runner.run()
 
     # try to create output directory with copy of assets
