@@ -5,14 +5,33 @@
         <script type="text/javascript" src="canvasjs.min.js"></script>
         <script type="text/javascript" src="out.js"></script>
         <link rel="stylesheet" type="text/css" href="style.css" />
+        <script type="text/javascript">
+        function display_breakdown(score_type) {
+            var my_labels=["Overall-breakdown", "CPU-breakdown", "IO-breakdown", "Network-breakdown"];
+            for(var i = 0; i < my_labels.length; i++) {
+                $("#"+my_labels[i]).css("display", "none");
+            }
+            var id=score_type.concat("-breakdown");
+            $("#"+id).css("display", "block");
+            $("#breakdown-legend").html(score_type+" Breakdown");
+        }
+        </script>
     </head>
     <body>
         <div class="page-container">
-	    {{primitives}}
+        {% if primitives %}
+            {{ primitives }}
+        {% endif %}
+
+        {% if workloads %}
             <fieldset>
             <legend>Real World Applications</legend>
-                {{workloads}}
+            {% for workload in workloads %}
+                {{ workload }}
+                <hr />
+            {% endfor %}
             </fieldset>
+        {% endif %}
         </div>
     </body>
 </html>

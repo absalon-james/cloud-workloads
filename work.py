@@ -128,15 +128,10 @@ class Runner(object):
 
         :returns: String
         """
-        workload_views = '<hr />'.join([w.view() for w in self.workloads])
-        if self.primitives:
-            primitives_view = self.primitives.view()
-        else:
-            primitives_view = ''
         view = View(
             'main.html',
-            workloads=workload_views,
-            primitives=primitives_view
+            workloads=[w.view() for w in self.workloads],
+            primitives=self.primitives.view() if self.primitives else None
         )
         return view
 

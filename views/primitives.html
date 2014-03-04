@@ -1,16 +1,4 @@
 <fieldset id="scores">
-<script type="text/javascript">
-function display_breakdown(score_type) {
-    var my_labels=["Overall-breakdown", "CPU-breakdown", "IO-breakdown", "Network-breakdown"];
-    for(var i = 0; i < my_labels.length; i++) 
-    {
-            $("#"+my_labels[i]).css("display", "none");
-    }
-    var id=score_type.concat("-breakdown");
-    $("#"+id).css("display", "block");
-    $("#breakdown-legend").html(score_type+" Breakdown");
-}
-</script>
 <legend>Your Score</legend>
     <div id="scores-chart">
         <table>
