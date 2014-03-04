@@ -22,6 +22,18 @@ body {
     font-family: Arial,"Helvetica Neue",Helvetica,sans-serif;
 }
 
+div.exception pre {
+    background: #fde4e1;
+    border: 1px solid #fbd3c6;
+    color: #cb4721;
+    padding: 10px;
+}
+
+div.exception .title {
+    color: #cb4721;
+    font-weight: bold;
+}
+
 div.page-container {
     text-align: left;
     margin: 10px auto 0 auto;

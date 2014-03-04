@@ -184,17 +184,16 @@ class Workload(BaseWorkload):
         terasort_reduce_tasks = \
             result['terasort'].get('Launched reduce tasks', 0)
 
-        view = View(
-            'hadoop.html',
-            numrecords=numrecords,
-            teragen_duration=teragen_duration,
-            teragen_map_tasks=teragen_map_tasks,
-            terasort_duration=terasort_duration,
-            terasort_map_tasks=terasort_map_tasks,
-            terasort_reduce_tasks=terasort_reduce_tasks,
-            terasort_data_points=datapoints
-        )
-        return view
+        self.view_dict.update({
+            'numrecords': numrecords,
+            'teragen_duration': teragen_duration,
+            'teragen_map_tasks': teragen_map_tasks,
+            'terasort_duration': terasort_duration,
+            'terasort_map_tasks': terasort_map_tasks,
+            'terasort_reduce_tasks': terasort_reduce_tasks,
+            'terasort_data_points': datapoints
+        })
+        return View('hadoop.html', **(self.view_dict))
 
 if __name__ == "__main__":
     load = Workload()

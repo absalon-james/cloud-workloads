@@ -29,9 +29,14 @@ class Workload(object):
         self.is_primitive = False
         self.client = client
         self.pool = pool
+
+        # Grab config, set defaults then update
         self.config = {}
         self.config.update(self.DEFAULT_CONFIG)
         self.config.update(config)
+
+        # Used to store information to be pushed to the html view
+        self.view_dict = {}
 
     def deploy(self):
         """
@@ -110,6 +115,16 @@ class Workload(object):
                     instance['antistates'].update(antistates)
 
             self.instances.append(instance)
+
+            # Update the view dict.
+            # The minion grains data already has roles. The instance also has
+            # roles. We note a difference as some of the existing roles on the
+            # minion might not be relevant to this workload.
+            minion_dict = {}
+            minion_dict.update(minion.data)
+            minion_dict.update(instance_role=list(roles))
+            self.view_dict['minions'] = []
+            self.view_dict['minions'].append(minion_dict)
 
     def apply_roles(self):
         """

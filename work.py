@@ -2,7 +2,7 @@ import argparse
 import os
 import shutil
 from common.config import YamlConfig
-from common.view import View
+from common.view import View, ExceptionView
 from remote.client import Client
 from remote.credentials import Pam
 from remote.pool import MinionPool
@@ -58,8 +58,8 @@ class Runner(object):
         """
         self.config = config
         self.credentials = credentials
-        self.workloads = []
-        self.primitives = None
+        self.views = []
+        self.primitives_view = None
 
     def run(self):
         """
@@ -83,11 +83,6 @@ class Runner(object):
                 workload_class = load_workload_class(class_name)
                 workload = workload_class(client, pool, workload_config)
                 self.run_workload(workload)
-
-                if (workload.is_primitive):
-                    self.primitives = workload
-                else:
-                    self.workloads.append(workload)
 
         except KeyboardInterrupt:
             print ("Exit requested. !!Warning, there may be left over"
@@ -114,13 +109,21 @@ class Runner(object):
         try:
             workload.deploy()
             workload.run()
+            view = workload.view()
 
         # Catch salt job related exceptions
         except MultiJobException as e:
+            trace = traceback.format_exc()
+            view = ExceptionView(workload, trace)
             print e
 
         finally:
             workload.undeploy()
+
+        if workload.is_primitive:
+            self.primitives_view = view
+        else:
+            self.views.append(view)
 
     def view(self):
         """
@@ -128,12 +131,11 @@ class Runner(object):
 
         :returns: String
         """
-        view = View(
+        return View(
             'main.html',
-            workloads=[w.view() for w in self.workloads],
-            primitives=self.primitives.view() if self.primitives else None
+            workloads=self.views,
+            primitives=self.primitives_view
         )
-        return view
 
 
 def parse_args():

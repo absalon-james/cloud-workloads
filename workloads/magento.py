@@ -71,15 +71,15 @@ class Workload(GatlingWorkload):
         """
         run = self.best_run
         active_sessions_plot = run['stats'].sessions_per_second_plot
-        return View(
-            'magento.html',
-            users=run.users,
-            duration=run.duration,
-            mean_response_time=run.mean_response_time,
-            requests_per_second_plot=run['stats'].requests_per_second_plot,
-            active_sessions_per_second_plot=active_sessions_plot,
-            response_times_plot=run['stats'].response_times_plot
-        )
+        self.view_dict.update({
+            'users': run.users,
+            'duration': run.duration,
+            'mean_response_time': run.mean_response_time,
+            'requests_per_second_plot': run['stats'].requests_per_second_plot,
+            'active_sessions_per_second_plot': active_sessions_plot,
+            'response_times_plot': run['stats'].response_times_plot
+        })
+        return View('magento.html', **(self.view_dict))
 
 if __name__ == '__main__':
     Workload().run()

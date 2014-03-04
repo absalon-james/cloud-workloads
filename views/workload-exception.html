@@ -1,0 +1,22 @@
+{% if workload.is_primitive %}
+<fieldset id="scores">
+<legend>Your Score</legend>
+    <div class="exception">
+        <div class="title">
+            Woops, we had trouble running the workload "{{ workload.name }}":
+        </div>
+        <pre>{{ trace }}</pre>
+    </div>
+</fieldset>
+{% else %}
+<div class="application" id="{{ workload.name.lower() }}">
+    <h3>{{ workload.name }}</h3>
+
+    <div class="exception">
+        <div class="title">
+            Woops, we had trouble running the workload "{{ workload.name }}".
+        </div>
+        <pre>{{ trace }}</pre>        
+    </div>
+</div>
+{% endif %}
