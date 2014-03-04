@@ -43,6 +43,14 @@
         </p>
     </div>
     <div class="clearfix"></div>
+    {% if minion_graph %}
+    <div class="graph-container">
+        <h4>Workload layout</h4>
+        <div class="graph minion-graph" id="drupal-minion-graph">
+        </div>
+    </div>
+    {% endif %}
+
     <div class="graph-container">
         <h4 class="title">Requests and Sessions</h4>
         <div class="graph" id="gatling-drupal-request-session"></div>
@@ -54,6 +62,20 @@
     </div>
     <script type="text/javascript">
     $(function() {
+
+        {% if minion_graph %}
+        var roleMap = {
+            'drupal_gatling': 'Gatling',
+            'drupal_web': 'Web Server',
+            'drupal_mysql_master': 'MySQL Master',
+            'drupal_mysql_slave': 'MySQL Slave'
+        };
+        var minion_nodes = {{ minion_graph.nodes }};
+        minion_nodes = renderPrettyRoles(roleMap, minion_nodes);
+        var minion_edges = {{ minion_graph.links }};
+        var minionGraph = new MinionGraph(minion_nodes, minion_edges);
+        minionGraph.render("#drupal-minion-graph");
+        {% endif %}
 
         var graph = {
             theme: "theme1",

@@ -50,12 +50,33 @@
     </div>
     
     <div class="clearfix"></div>
+
+    {% if minion_graph %}
+    <div class="graph-container">
+        <h4>Workload layout</h4>
+        <div class="graph minion-graph" id="hadoop-minion-graph">
+        </div>
+    </div>
+    {% endif %}
+
     <div class="graph-container">
         <h4 class="title">Terasort Time Distribution</h4>
         <div class="graph" id="hadoop-terasort-pie-chart"></div>
     </div>
     <script type="text/javascript">
     $(function() {
+
+        {% if minion_graph %}
+        var roleMap = {
+            'hadoop_master': 'NameNode, JobTracker',
+            'hadoop_slave': 'DataNode, TaskTracker'
+        };
+        var minion_nodes = {{ minion_graph.nodes }};
+        minion_nodes = renderPrettyRoles(roleMap, minion_nodes);
+        var minion_edges = {{ minion_graph.links }};
+        var minionGraph = new MinionGraph(minion_nodes, minion_edges);
+        minionGraph.render("#hadoop-minion-graph");
+        {% endif %}
 
         var graph = {
             theme: "theme1",

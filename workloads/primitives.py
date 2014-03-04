@@ -45,6 +45,10 @@ class Workload(BaseWorkload):
         {'state': 'primitives.anti'}
     ]
 
+    MINION_GRAPH_EDGE_MAP = {
+        'primitives': ['primitives_target']
+    }
+
     def __init__(self, client, pool, config):
         super(Workload, self).__init__(client, pool, config)
         self.is_primitive = True
@@ -346,17 +350,18 @@ class Workload(BaseWorkload):
 
         @return - String
         """
-        return View(
-            'primitives.html',
-            overall_score=int(self.overall_analyzer.overall_score),
-            cpu_score=int(self.cpu_analyzer.overall_score),
-            io_score=int(self.io_analyzer.overall_score),
-            network_score=int(self.network_analyzer.overall_score),
-            overall_breakdown=self.overall_analyzer.breakdown,
-            cpu_breakdown=self.cpu_analyzer.breakdown,
-            io_breakdown=self.io_analyzer.breakdown,
-            network_breakdown=self.network_analyzer.breakdown
-        )
+        self.view_dict.update({
+            'overall_score': int(self.overall_analyzer.overall_score),
+            'cpu_score': int(self.cpu_analyzer.overall_score),
+            'io_score': int(self.io_analyzer.overall_score),
+            'network_score': int(self.network_analyzer.overall_score),
+            'overall_breakdown': self.overall_analyzer.breakdown,
+            'cpu_breakdown': self.cpu_analyzer.breakdown,
+            'io_breakdown': self.io_analyzer.breakdown,
+            'network_breakdown': self.network_analyzer.breakdown
+
+        })
+        return View('primitives.html', **(self.view_dict))
 
 if __name__ == '__main__':
     Workload().run()

@@ -46,6 +46,12 @@ class Workload(GatlingWorkload):
         {'state': 'drupal.antigatling'}
     ]
 
+    MINION_GRAPH_EDGE_MAP = {
+        'drupal_gatling': ['drupal_web'],
+        'drupal_web': ['drupal_mysql_master', 'drupal_mysql_slave'],
+        'drupal_mysql_slave': ['drupal_mysql_master']
+    }
+
     @property
     def name(self):
         """
@@ -66,16 +72,15 @@ class Workload(GatlingWorkload):
     def view(self):
         run = self.best_run
         active_sessions_plot = run['stats'].sessions_per_second_plot
-        view = View(
-            'drupal.html',
-            users=run.users,
-            duration=run.duration,
-            mean_response_time=run.mean_response_time,
-            requests_per_second_plot=run['stats'].requests_per_second_plot,
-            active_sessions_per_second_plot=active_sessions_plot,
-            response_times_plot=run['stats'].response_times_plot
-        )
-        return view
+        self.view_dict.update({
+            'users': run.users,
+            'duration': run.duration,
+            'mean_response_time': run.mean_response_time,
+            'requests_per_second_plot': run['stats'].requests_per_second_plot,
+            'active_sessions_per_second_plot': active_sessions_plot,
+            'response_times_plot': run['stats'].response_times_plot
+        })
+        return View('drupal.html', **(self.view_dict))
 
 if __name__ == '__main__':
     Workload().run()

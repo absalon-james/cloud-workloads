@@ -103,6 +103,10 @@ class Workload(BaseWorkload):
         {'state': 'dbt2.antidbt2'}
     ]
 
+    MINION_GRAPH_EDGE_MAP = {
+        'dbt2': ['dbt2_db']
+    }
+
     def __init__(self, client, pool, config):
         super(Workload, self).__init__(client, pool, config)
         self._results = []
@@ -226,12 +230,12 @@ class Workload(BaseWorkload):
         :returns: String html representation of workload output
         """
         best_run = self.best_run
-        return View(
-            'mysql.html',
-            tpm=best_run.get('tpm'),
-            warehouses=best_run.get('warehouses'),
-            tpm_plot=self.tpm_plot
-        )
+        self.view_dict.update({
+            'tpm': best_run.get('tpm'),
+            'warehouses': best_run.get('warehouses'),
+            'tpm_plot': self.tpm_plot
+        })
+        return View('mysql.html', **(self.view_dict))
 
 if __name__ == "__main__":
     load = Workload()
