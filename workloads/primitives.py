@@ -45,6 +45,10 @@ class Workload(BaseWorkload):
         {'state': 'primitives.anti'}
     ]
 
+    MINION_GRAPH_EDGE_MAP = {
+        'primitives': ['primitives_target']
+    }
+
     def __init__(self, client, pool, config):
         super(Workload, self).__init__(client, pool, config)
         self.is_primitive = True

@@ -35,6 +35,14 @@
         </p>
     </div>
     <div class="clearfix"></div>
+    {% if minion_graph %}
+    <div class="graph-container">
+        <h4>Workload layout</h4>
+        <div class="graph minion-graph" id="magento-minion-graph">
+        </div>
+    </div>
+    {% endif %}
+
     <div class="graph-container">
         <h4 class="title">Requests and Sessions</h4>
         <div class="graph" id="gatling-magento-request-session"></div>
@@ -46,6 +54,21 @@
     </div>
     <script type="text/javascript">
     $(function() {
+
+        {% if minion_graph %}
+        var roleMap = {
+            'magento_gatling': 'Gatling',
+            'magento_web': 'Web Server',
+            'magento_mysql_master': 'MySQL Master',
+            'magento_mysql_slave': 'MySQL Slave'
+        };
+        var minion_nodes = {{ minion_graph.nodes }};
+        minion_nodes = renderPrettyRoles(roleMap, minion_nodes);
+
+        var minion_edges = {{ minion_graph.links }};
+        var minionGraph = new MinionGraph(minion_nodes, minion_edges);
+        minionGraph.render("#magento-minion-graph");
+        {% endif %}
 
         var graph = {
             theme: "theme1",

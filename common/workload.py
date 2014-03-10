@@ -1,3 +1,6 @@
+from graph import MinionGraph
+
+
 class Workload(object):
     """
     Class that handles a cloud workload.  A workload should consist
@@ -96,6 +99,7 @@ class Workload(object):
         """
         self.instances = []
         instances = self.config.get('instances', [])
+        self.view_dict['minions'] = []
         for i in instances:
             roles = set(i['roles'])
             minion = self.pool.get_minion()
@@ -114,6 +118,7 @@ class Workload(object):
                     antistates = self.DEFAULT_ANTI_STATES.get(role, [])
                     instance['antistates'].update(antistates)
 
+            minion.update({'instance_roles': list(roles)})
             self.instances.append(instance)
 
             # Update the view dict.
@@ -144,6 +149,12 @@ class Workload(object):
             minion_sets.append([minion])
             role_sets.append(roles)
         self.client.set_roles(minion_sets, role_sets, timeout=30)
+
+        # Update the view dict with the graph.
+        self.view_dict['minion_graph'] = MinionGraph(
+            [i['minion'] for i in self.instances],
+            self.MINION_GRAPH_EDGE_MAP
+        )
 
     def deploy_plan(self, deploy=True):
         """

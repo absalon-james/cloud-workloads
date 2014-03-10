@@ -67,6 +67,10 @@ class Workload(BaseWorkload):
         {'state': 'hadoop.antihadoop'}
     ]
 
+    MINION_GRAPH_EDGE_MAP = {
+        'hadoop_master': ['hadoop_slave']
+    }
+
     def __init__(self, client, pool, config):
         super(Workload, self).__init__(client, pool, config)
         self.result = {}

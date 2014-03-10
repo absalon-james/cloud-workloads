@@ -46,6 +46,12 @@ class Workload(GatlingWorkload):
         {'state': 'magento.antigatling'}
     ]
 
+    MINION_GRAPH_EDGE_MAP = {
+        'magento_gatling': ['magento_web'],
+        'magento_web': ['magento_mysql_master', 'magento_mysql_slave'],
+        'magento_mysql_slave': ['magento_mysql_master']
+    }
+
     @property
     def name(self):
         """

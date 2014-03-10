@@ -31,6 +31,13 @@
     </div>
     
     <div class="clearfix"></div>
+    {% if minion_graph %}
+    <div class="graph-container">
+        <h4>Workload layout</h4>
+        <div class="graph minion-graph" id="mysql-minion-graph">
+        </div>
+    </div>
+    {% endif %}
 
     <div class="graph-container">
         <h4 class="title">New Order Transactions Per Minute(NOTPM)</h4>
@@ -38,6 +45,18 @@
     </div>
     <script type="text/javascript">
     $(function() {
+
+        {% if minion_graph %}
+        var roleMap = {
+            'dbt2': 'DBT2',
+            'dbt2_db': 'MySQL'
+        }
+        var minion_nodes = {{ minion_graph.nodes }};
+        minion_nodes = renderPrettyRoles(roleMap, minion_nodes);
+        var minion_edges = {{ minion_graph.links }};
+        var minionGraph = new MinionGraph(minion_nodes, minion_edges);
+        minionGraph.render("#mysql-minion-graph");
+        {% endif %}
 
         var graph = {
             theme: "theme1",

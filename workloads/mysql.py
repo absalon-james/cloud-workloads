@@ -103,6 +103,10 @@ class Workload(BaseWorkload):
         {'state': 'dbt2.antidbt2'}
     ]
 
+    MINION_GRAPH_EDGE_MAP = {
+        'dbt2': ['dbt2_db']
+    }
+
     def __init__(self, client, pool, config):
         super(Workload, self).__init__(client, pool, config)
         self._results = []

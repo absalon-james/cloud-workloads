@@ -46,6 +46,12 @@ class Workload(GatlingWorkload):
         {'state': 'drupal.antigatling'}
     ]
 
+    MINION_GRAPH_EDGE_MAP = {
+        'drupal_gatling': ['drupal_web'],
+        'drupal_web': ['drupal_mysql_master', 'drupal_mysql_slave'],
+        'drupal_mysql_slave': ['drupal_mysql_master']
+    }
+
     @property
     def name(self):
         """
