@@ -269,7 +269,7 @@ class Installer(object):
         except Exception:
             print (
                 "Could not open file %s to send to %s on %s"
-                % (src, dst, minion['ssh_id'])
+                % (src, dst, target)
             )
             return
 
@@ -292,12 +292,15 @@ class Installer(object):
                 if not resp_value.values()[0]['result']:
                     print (
                         "Unable to send file %s to %s on %s"
-                        % (src, dst, minion['ssh_id'])
+                        % (src, dst, target)
                     )
 
     def send_file_sftp(self, src, dst, minion):
 
-        print "Sending file via sftp %s to %s on %s" % (src, dst, minion['ssh_id'])
+        print (
+            "Sending file via sftp %s to %s on %s"
+            % (src, dst, minion['ssh_id'])
+        )
 
         host = self.roster.get(minion['ssh_id'])
         if host is None:
@@ -313,7 +316,14 @@ class Installer(object):
         transport.close()
 
     def move_file(self, src, dst, target='*'):
-        
+        """
+        Moves the file src to dst on target.
+
+        @param src - String source location on target
+        @param dst - String destination location on target
+        @param target - String target
+
+        """
         print "Moving %s to %s on %s..." % (src, dst, target)
         arg_str = "mv %s %s" % (src, dst)
         resp = self.run(arg_str, func="cmd.run_all", target=target)
@@ -364,7 +374,7 @@ class Installer(object):
             src = os.path.join(cwd, "%s.pem" % minion['ssh_id'])
             dst = os.path.join('/tmp', 'minion.pem')
             self.send_file_sftp(src, dst, minion)
-            
+
             # move file to location requiring sudo
             src = dst
             dst = os.path.join(minion_pki_dir, 'minion.pem')
