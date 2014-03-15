@@ -1,0 +1,14 @@
+{% set db_interface = salt['pillar.get']("interfaces:private", 'eth0') %}
+{% set drupal = {
+    'slave_user': salt['pillar.get']('drupal:slave:user', 'drupal_slave'),
+    'slave_password': salt['pillar.get']('drupal:slave:password', 'drupal_slave'),
+    'slave_host': salt['pillar.get']('drupal:slave:host', "'%'"),
+
+    'db_user': salt['pillar.get']('drupal:db:user', 'drupal_bench'),
+    'db_password': salt['pillar.get']('drupal:db:password', 'drupal_bench'),
+    'db_host': salt['pillar.get']('drupal:db:host', "'%'"),
+    'db_interface': db_interface,
+
+    'master': salt['publish.publish']('roles:drupal_mysql_master', 'network.ip_addrs', db_interface, 'grain').values()[0][0],
+    'slaves': salt['publish.publish']('roles:drupal_mysql_slave', 'network.ip_addrs',  db_interface, 'grain'),
+} %}

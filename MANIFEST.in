@@ -1,0 +1,5 @@
+include README.md
+include cloud_workloads/assets/*
+include cloud_workloads/views/*
+recursive-include pillar *
+recursive-include states *

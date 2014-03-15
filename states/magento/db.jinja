@@ -1,0 +1,16 @@
+{% set db_interface = salt['pillar.get']("interfaces:private", "eth0") %}
+{% set magento = {
+    'slave_user': salt['pillar.get']('magento:slave:user', 'magento_slave'),
+    'slave_password': salt['pillar.get']('magento:slave:password', 'magento_slave'),
+    'slave_host': salt['pillar.get']('magento:slave:host', "'%'"),
+
+    'db_user': salt['pillar.get']('magento:db:user', 'magento'),
+    'db_password': salt['pillar.get']('magento:db:password', 'magento_bench'),
+    'db_host': salt['pillar.get']('magento:db:host', "'%'"),
+
+    'db_name': salt['pillar.get']('magento:db:name', 'magento'),
+
+    'db_interface': db_interface,
+    'master': salt['publish.publish']('roles:magento_mysql_master', 'network.ip_addrs', db_interface, 'grain').values()[0][0],
+    'slave': salt['publish.publish']('roles:magento_mysql_slave', 'network.ip_addrs',  db_interface, 'grain').values()[0][0],
+} %}

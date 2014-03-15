@@ -1,0 +1,122 @@
+<div class="application" id="magento">
+    <h3>Magento</h3>
+    <div class="scores">
+        <table>
+        <tr>
+            <td class="score-label">Users</td>
+            <td class="score-value">{{users}}</td>
+        </tr>
+        <tr>
+            <td class="score-label">Duration(s)</td>
+            <td class="score-value">{{duration}}</td>
+        </tr>
+        <tr>
+            <td class="score-label">Mean Response Time(ms)</td>
+            <td class="score-value">{{mean_response_time}}</td>
+        </tr>
+        </table>
+    </div>
+    <div class"explanation">
+        <p>
+        Our Magento configuration is set up on 3 8GB separate webheads. Each
+        webhead sports Apache2, PHP 5 and Magento 1.8 Community Edition.
+        A single 8 GB MySQL node is used for the database. The database is
+        prepopulated with magento-sample-data-1.6.1.0. Gatling Tool is used
+        to increasingly apply load until the average response time exceeds
+        1000ms or the percentage of successful requests drops below 99%.
+        The last successful iteration's results are displayed.
+        </p>
+        <p>
+            <a href="http://gatling-tool.org/">Gatling</a>,
+            <a href="http://httpd.apache.org/">Apache2</a>,
+            <a href="http://www.magentocommerce.com/product/community-edition/">Magento 1.8 Community Edition</a>,
+            <a href="http://www.mysql.com/">MySQL</a>,
+            <a href="http://php.net/">PHP5</a>
+        </p>
+    </div>
+    <div class="clearfix"></div>
+    {% if minion_graph %}
+    <div class="graph-container">
+        <h4>Workload layout</h4>
+        <div class="graph minion-graph" id="magento-minion-graph">
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="graph-container">
+        <h4 class="title">Requests and Sessions</h4>
+        <div class="graph" id="gatling-magento-request-session"></div>
+    </div>
+
+    <div class="graph-container">
+        <h4 class="title">Response Time Distribution</h4>
+        <div class="graph" id="gatling-magento-response-time"></div>
+    </div>
+    <script type="text/javascript">
+    $(function() {
+
+        {% if minion_graph %}
+        var roleMap = {
+            'magento_gatling': 'Gatling',
+            'magento_web': 'Web Server',
+            'magento_mysql_master': 'MySQL Master',
+            'magento_mysql_slave': 'MySQL Slave'
+        };
+        var minion_nodes = {{ minion_graph.nodes }};
+        minion_nodes = renderPrettyRoles(roleMap, minion_nodes);
+
+        var minion_edges = {{ minion_graph.links }};
+        var minionGraph = new MinionGraph(minion_nodes, minion_edges);
+        minionGraph.render("#magento-minion-graph");
+        {% endif %}
+
+        var graph = {
+            theme: "theme1",
+            toolTip: {shared: "true"},
+            axisY: {title: "Per Second"},
+            data: [
+                {
+                    type: "spline",
+                    showInLegend: true,
+                    xValueType: "dateTime",
+                    name: "Requests Per Second",
+                    legendText: "Requests Per Second",
+                    dataPoints: {{requests_per_second_plot}}
+                },
+                {
+                    type: "spline",
+                    showInLegend: true,
+                    xValueType: "dateTime",
+                    name: "Active Sessions Per Second",
+                    dataPoints: {{active_sessions_per_second_plot}}
+                }
+            ]
+        };
+
+        var chart = new CanvasJS.Chart("gatling-magento-request-session", graph);
+        chart.render();
+
+        var response_times = {{response_times_plot}};
+
+        graph = {
+            theme: "theme1",            
+            axisY: {title: "Requests"},
+            data: [
+                {
+                    type: "column",
+                    name: "Response Times",
+                    toolTipContent: "<span style='\"'color: {color};'\"'><strong>{y} Requests</strong></span>",
+                    dataPoints: [
+                        {y: response_times["t <= 800ms"], label: "t <= 800ms"},
+                        {y: response_times["800ms < t <= 1200ms"], label: "800ms < t <= 1200ms"},
+                        {y: response_times["t > 1200ms"], label: "t > 1200ms"},
+                        {y: response_times["failed"], label: "failed"}
+                    ]                    
+                }
+            ]            
+        }
+        chart = new CanvasJS.Chart("gatling-magento-response-time", graph);
+        chart.render();
+    });
+    </script>
+</div>

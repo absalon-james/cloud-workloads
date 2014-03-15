@@ -1,0 +1,106 @@
+<div class="application" id="hadoop">
+    <h3>Hadoop</h3>
+    <div class="scores">
+        <table>
+        <tr>
+            <td class="score-label">Number of 100 Byte records</td>
+            <td class="score-value">{{numrecords}}</td>
+        </tr>
+        <tr>
+            <td class="score-section-heading" colspan="2">Teragen</td>
+        </tr>
+        <tr>
+            <td class="score-label">Duration (s)</td>
+            <td class="score-value">{{teragen_duration}}</td>
+        </tr>
+        <tr>
+            <td class="score-label">Map Tasks</td>
+            <td class="score-value">{{teragen_map_tasks}}</td>
+        </tr>
+        <tr>
+            <td class="score-section-heading" colspan="2">Terasort</td>            
+        </tr>
+        <tr>
+            <td class="score-label">Duration (s)</td>
+            <td class="score-value">{{terasort_duration}}</td>
+        </tr>
+        <tr>
+            <td class="score-label">Map Tasks</td>
+            <td class="score-value">{{terasort_reduce_tasks}}</td>
+        </tr>
+        <tr>
+            <td class="score-label">Reduce Tasks</td>
+            <td class="score-value">{{terasort_reduce_tasks}}</td>
+        </tr>
+        </table>
+    </div>
+
+    <div class="explanation">
+        <p>
+        The hadoop test consists of Teragen and Terasort. Teragen generates a
+        specified number of 100 byte records.  Terasort then sorts those
+        records.  The time to complete each task is measured.
+        </p>
+
+        <p>
+            <a href="http://hadoop.apache.org/">Hadoop</a>,
+            <a href="http://hadoop.apache.org/docs/r2.2.0/api/org/apache/hadoop/examples/terasort/package-summary.html">Teragen</a>,
+            <a href="http://hadoop.apache.org/docs/r2.2.0/api/org/apache/hadoop/examples/terasort/package-summary.html">Terasort</a>
+        </p>
+    </div>
+    
+    <div class="clearfix"></div>
+
+    {% if minion_graph %}
+    <div class="graph-container">
+        <h4>Workload layout</h4>
+        <div class="graph minion-graph" id="hadoop-minion-graph">
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="graph-container">
+        <h4 class="title">Terasort Time Distribution</h4>
+        <div class="graph" id="hadoop-terasort-pie-chart"></div>
+    </div>
+    <script type="text/javascript">
+    $(function() {
+
+        {% if minion_graph %}
+        var roleMap = {
+            'hadoop_master': 'NameNode, JobTracker',
+            'hadoop_slave': 'DataNode, TaskTracker'
+        };
+        var minion_nodes = {{ minion_graph.nodes }};
+        minion_nodes = renderPrettyRoles(roleMap, minion_nodes);
+        var minion_edges = {{ minion_graph.links }};
+        var minionGraph = new MinionGraph(minion_nodes, minion_edges);
+        minionGraph.render("#hadoop-minion-graph");
+        {% endif %}
+
+        var graph = {
+            theme: "theme1",
+            legend: {
+                verticalAlign: "bottom",
+                horizontalAlign: "center"
+            },
+            toolTip: {enabled: "true"},            
+            data: [
+                {
+                    type: "pie",
+                    startAngle: 0,
+                    showInLegend: true,
+                    indexLabelPlacement: "inside",
+                    indexLabelFontSize: 20,
+                    indexLabelFontColor: "MistyRose",
+                    toolTipContent: "{name}: {y}s",
+                    dataPoints: {{terasort_data_points}}
+                },
+            ]
+        };
+
+        var chart = new CanvasJS.Chart("hadoop-terasort-pie-chart", graph);
+        chart.render();
+    });
+    </script>
+</div>

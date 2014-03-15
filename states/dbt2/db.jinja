@@ -1,0 +1,12 @@
+{% set db_interface = salt['pillar.get']("interfaces:private", 'eth0') %}
+{% set dbt2 = {
+    'user': salt['pillar.get']('db:user', 'dbt2'),
+    'password': salt['pillar.get']('db:password', 'dbt2'),
+    'host': salt['pillar.get']('db:host', "'%'"),
+    'interface': salt['pillar.get']('db:interface', 'eth0'),
+    'location': salt['publish.publish']('roles:dbt2_db', 'network.ip_addrs', db_interface, 'grain').values()[0][0],
+    'database': salt['pillar.get']('db:database', 'dbt2'),
+    'warehouses': salt['pillar.get']('db:warehouses', '10'),
+    'connections': salt['pillar.get']('db:connections', '10'),
+    'duration': salt['pillar.get']('db:duration', '180')
+} %}

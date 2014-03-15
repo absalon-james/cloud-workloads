@@ -1,0 +1,248 @@
+table {
+    border-collapse: collapse;
+}
+
+h1, h2, h3, h4, h5, h6, p {
+    margin: 0;
+}
+
+a {
+    color: #777;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+body {
+    text-align: center;
+    background: #dcdbd4;
+    font-size: 12pt;
+    color: #000000;
+    margin: 0;
+    padding: 0;
+    font-family: Arial,"Helvetica Neue",Helvetica,sans-serif;
+}
+
+div.exception pre {
+    background: #fde4e1;
+    border: 1px solid #fbd3c6;
+    color: #cb4721;
+    padding: 10px;
+    width: 900px;
+    overflow: auto;
+}
+
+div.exception .title {
+    color: #cb4721;
+    font-weight: bold;
+}
+
+div.page-container {
+    text-align: left;
+    margin: 10px auto 0 auto;
+    width: 960px;
+    padding: 0;
+}
+
+h3 {
+    margin-bottom: 10px;
+    color: #369ead;
+}
+
+fieldset {
+    padding: 10px;
+    background: #fbfbfb;
+    border-radius: 7px;
+    -moz-border-radius: 7px;
+    -moz-box-shadow:    2px 1px 5px 2px #777;
+    -webkit-box-shadow: 2px 1px 5px 2px #777;
+    box-shadow:         2px 1px 5px 2px #777;
+    margin-bottom: 10px;
+}
+
+legend {
+    color: #fbfbfb;
+    background: #777777;
+    font-size: 14pt;
+    padding: 5px 10px;
+    font-weight: bold;
+    border: 1px solid #444;
+    border-radius: 7px;
+    text-shadow: 0px 0px 3px #000;
+}
+
+#scores-chart {
+    float: left;
+    margin-right: 20px;
+}
+
+#scores-explanation {
+    overflow: hidden;
+}
+
+td.overall.score {
+    font-size: 50pt;
+    font-weight: bold;
+    font-style: italic;
+    color: #fbfbfb;
+    text-align: center;
+    padding: 10px 10px;
+    vertical-align: center;
+    text-shadow: 0px 0px 3px #000;
+    background: #777;
+    border: 1px solid #777
+}
+
+td.individual {
+    padding: 3px 5px;
+    border: 1px solid #777;
+}
+
+td.individual.label {
+    color: #333;
+    padding-left: 40px;
+    font-weight: bold;
+}
+
+td.individual.score {
+    font-style: italic;
+    text-align: right;
+    padding: 3px 5px;
+    color: #fbfbfb;
+    background: #777;
+    text-shadow: 0px 0px 3px #000;    
+}
+
+div.breakdown {
+   display: none;
+}
+
+td.breakdown {
+    padding: 3px 5px;
+    border: 1px solid #777
+}
+
+div.application {
+    padding-left: 15px;
+    padding-right: 15px;
+}
+
+div.application div.explanation {
+    overflow: hidden;
+}
+
+div.application div.scores {
+    float: right;
+    margin-left: 20px;
+}
+
+div.application div.scores table {
+    width: 250px;
+}
+
+hr {
+    margin-top: 50px;
+}
+
+div.application p {
+    margin: 10px 0;
+}
+
+td.score-section-heading {
+    padding: 15px 5px 3px 5px;
+    color: #333;
+    font-weight: bold;
+}
+
+td.score-label {
+    padding: 3px 5px;
+    color: #333;
+    font-weight: bold;
+    border: 1px solid #777;
+}
+
+td.score-value {
+    width: 50px;
+    padding: 3px 5px;
+    font-style: italic;
+    text-align: right;
+    vertical-align: bottom;
+    padding: 3px 5px;
+    color: #fbfbfb;
+    background: #777;
+    text-shadow: 0px 0px 3px #000;
+    border: 1px solid #777;
+}
+
+div.graph-container {
+    margin: 10px 0;
+}
+
+div.graph-container .title {
+    padding: 5px;
+}
+
+div.graph {
+    height: 300px;
+    border: 1px solid #777;
+}
+
+div.clearfix {
+    clear: both;
+}
+
+div.tooltip {
+    display: table;
+    text-align: left;
+    font-size: 12px;
+    background: #fff;
+    position: absolute;
+    padding: 7px;
+    border-radius: 5px;
+    -moz-border-radius: 5px;
+    border: 2px solid #369ead;
+    opacity: 0;
+}
+
+div.tooltip table {
+    border-collapse: collapse;    
+}
+
+div.tooltip .label {
+    color: #111;
+    font-weight: bold;
+    padding-right: 10px;
+}
+
+.minion-graph .node circle {
+    fill: url(#node-g1);
+    stroke: #000;
+    stoke-width: 2px;
+}
+
+.minion-graph .node text {
+    font-family: Fixed, monospace;
+    font-weight: bolder;
+    opacity: 0.7;
+}
+
+.minion-graph .edgePath {
+    fill: none;
+    stroke: #aaa;
+    stroke-width: 2px;
+    opacity: 0.5;
+}
+
+.minion-graph .node.active circle {
+    fill: url("#node-g2");
+    stroke: #205F68;
+}
+
+.minion-graph .edgePath.active {
+    stroke: #369ead;
+    stroke-width: 3px;
+}
+
+.minion-graph .node.active text {
+    fill: #266F79;
+    opacity: 1;
+}
