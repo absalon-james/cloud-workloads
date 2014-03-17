@@ -1,5 +1,6 @@
 import cStringIO
 import os
+import subprocess
 import time
 from cloud_workloads.common.workload import Workload as BaseWorkload
 from cloud_workloads.common.view import View
@@ -56,6 +57,7 @@ class Workload(BaseWorkload):
         'hadoop_user': 'hdfs',
         'terasort_data_path': '/teragen',
         'terasort_size': 500000,
+        'formula_dir': '/srv/salt/hadoop'
     }
 
     DEPLOY_SEQUENCE = [
@@ -72,8 +74,40 @@ class Workload(BaseWorkload):
     }
 
     def __init__(self, client, pool, config):
+        """
+        Workload constructor
+
+        """
         super(Workload, self).__init__(client, pool, config)
         self.result = {}
+        self.generate_keys()
+
+    def generate_keys(self):
+        """
+        The hadoop salt formula includes a script called
+        'generate_keypairs.sh' that generates public and private keys
+        for yarn, mapred, and hdfs. This method executes that script
+        in that script's directory. The script will create keys if they
+        do not already exist.
+
+        """
+        print "Generating keys"
+        oldcwd = os.getcwd()
+        key_script_dir = os.path.join(self.config['formula_dir'], 'files')
+        try:
+            os.chdir(key_script_dir)
+            subprocess.check_call(['sh', 'generate_keypairs.sh'])
+        finally:
+            os.chdir(oldcwd)
+
+    #def deploy(self):
+    #    """
+    #    Need to generate keys in addition to normal deployments.
+    #    Override parent class deploy() and preempt with generate keys
+    #
+    #    """
+    #    self.generate_keys()
+    #    super(Workload, self).deploy()
 
     @property
     def name(self):
@@ -85,10 +119,22 @@ class Workload(BaseWorkload):
         return "Hadoop"
 
     def example_jar(self):
+        """
+        Returns the path to the example jar.
+
+        @returns - String
+
+        """
         return os.path.join(self.config['hadoop_path'],
                             self.config['hadoop_example'])
 
     def hadoop_bin(self):
+        """
+        Returns the path to the hadoop bin
+
+        @returns - String
+
+        """
         return os.path.join(self.config['hadoop_path'], 'bin/hadoop')
 
     def teragen_command(self):

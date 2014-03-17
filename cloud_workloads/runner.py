@@ -148,7 +148,7 @@ class Runner(object):
         try:
             shutil.copytree(assets_dir, outdir)
         except OSError as e:
-            print "Unable to create output directory: %s" % output
+            print "Unable to create output directory: %s" % outdir
             print e
             exit()
 
