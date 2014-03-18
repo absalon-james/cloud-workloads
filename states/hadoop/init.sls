@@ -2,8 +2,8 @@ include:
   - hostsfile.hostname
   - hostsfile
   - ntp.server
-  - sun-java
-  - sun-java.env
+  - java
+  - java.env
 
 {%- from 'hadoop/settings.sls' import hadoop with context %}
 # TODO: no users implemented in settings yet
@@ -159,7 +159,8 @@ hadoop-conf-link:
     - user: root
     - group: root
     - context:
-      java_home: {{ salt['pillar.get']('java_home', '/usr/lib/java') }}
+      #java_home: {{ salt['pillar.get']('java_home', '/usr/lib/java') }}
+      java_home: {{ salt['pillar.get']('java_home', '/usr/lib/jvm/java-7-openjdk-amd64') }}
       hadoop_home: {{ hadoop['alt_home'] }}
       hadoop_config: {{ hadoop['alt_config'] }}
 
@@ -172,7 +173,8 @@ hadoop-conf-link:
     - user: root
     - group: root
     - context:
-      java_home: {{ salt['pillar.get']('java_home', '/usr/lib/java') }}
+      #java_home: {{ salt['pillar.get']('java_home', '/usr/lib/java') }}
+      java_home: {{ salt['pillar.get']('java_home', '/usr/lib/jvm/java-7-openjdk-amd64') }}
       hadoop_home: {{ hadoop['alt_home'] }}
       hadoop_config: {{ hadoop['alt_config'] }}
 {%- endif %}

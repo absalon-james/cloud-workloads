@@ -1,8 +1,7 @@
 {% from 'gatling/settings.sls' import gatling with context %}
 
 include:
-  - sun-java
-  - sun-java.env
+  - java
 
 gatling-user:
   user.present:

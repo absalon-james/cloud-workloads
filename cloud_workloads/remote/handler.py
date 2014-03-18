@@ -44,7 +44,6 @@ class BaseJobException(Exception):
         @return - String
 
         """
-        print "Checking job %s" % job
         msg_tuple = (job.kwargs['fun'],
                      job.kwargs['arg'],
                      job.kwargs['tgt'])
