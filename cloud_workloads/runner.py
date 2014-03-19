@@ -140,7 +140,7 @@ class Runner(object):
         assests. Generates the html to view the results.
 
         @param outdir - String output directory
-        
+
         """
         # try to create output directory with copy of assets
         assets_dir = os.path.dirname(__file__)

@@ -1,0 +1,42 @@
+#!/usr/bin/env python
+
+import argparse
+import os
+import shutil
+from cloud_workloads.remote.credentials import Pam
+from cloud_workloads.runner import Runner
+from cloud_workloads.common.config import YamlConfig
+
+
+def parse_args():
+    prog = "cloud-workloads-runner"
+    parser = argparse.ArgumentParser(prog=prog)
+
+    help_ = "Yaml configuration file describing cloud workloads."
+    parser.add_argument('config_file', help=help_)
+
+    help_ = "Output directory to place html, css, and javascript files."
+    parser.add_argument('output_dir', help=help_)
+
+    help_ = "User for salt external authentication."
+    parser.add_argument('--username', default=None, help=help_)
+
+    help_ = "Password for salt external authentication."
+    parser.add_argument('--password', default=None, help=help_)
+
+    return parser.parse_args()
+
+if __name__ == "__main__":
+    args = parse_args()
+
+    # Set up credentials
+    if args.username is not None:
+        credentials = Pam(args.username, args.password)
+    else:
+        credentials = None
+
+    # Get the configuration
+    config = YamlConfig(args.config_file)
+    runner = Runner(config, credentials=credentials)
+    runner.run()
+    runner.output_html(args.output_dir)

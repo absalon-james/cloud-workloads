@@ -1,7 +1,8 @@
 import cStringIO
 import os
 from cloud_workloads.common.primitives.bench_analyzer import bench_analyzer
-from cloud_workloads.common.primitives.parser import io_parser, cpu_parser, network_parser
+from cloud_workloads.common.primitives.parser import \
+    io_parser, cpu_parser, network_parser
 from cloud_workloads.common.view import View
 from cloud_workloads.common.workload import Workload as BaseWorkload
 
