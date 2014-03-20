@@ -1,3 +1,15 @@
+{% set total_mem = (salt['grains.get']('mem_total'))|int %}
+{% set leftover_mem = (total_mem * 0.2)|int %}
+{% if leftover_mem < 256 %}
+{%    set leftover_mem = 256 %}
+{% endif %}
+
+{% set rec_key_buffer_size = (total_mem * 0.05)|int %}
+{% set key_buffer_size = salt['pillar.get']('mysql:key_buffer_size', '%sM' % rec_key_buffer_size) %}
+
+{% set rec_innodb_buffer_size = total_mem - leftover_mem - rec_key_buffer_size %}
+{% set innodb_buffer_pool_size = salt['pillar.get']('mysql:innodb_buffer_pool_size', '%sM' % rec_innodb_buffer_size) %} 
+
 # The MySQL database server configuration file.
 #
 # You can copy this to one of:
@@ -47,7 +59,7 @@ bind-address		= {{ grains['ip_interfaces'][salt['pillar.get']('interfaces:privat
 #
 # * Fine Tuning
 #
-key_buffer		= 16M
+key_buffer		= {{ key_buffer_size }}
 max_allowed_packet	= 16M
 thread_stack		= 192K
 thread_cache_size       = 8
@@ -106,12 +118,11 @@ max_binlog_size         = 100M
 # ssl-cert=/etc/mysql/server-cert.pem
 # ssl-key=/etc/mysql/server-key.pem
 
-innodb_buffer_pool_size = {{ salt['pillar.get']('mysql:innodb_buffer_pool_size', '256M') }}
-innodb_log_file_size    = {{ salt['pillar.get']('mysql:innodb_log_file_size', '5M') }}
+innodb_buffer_pool_size = {{ innodb_buffer_pool_size }}
+innodb_log_file_size    = {{ salt['pillar.get']('mysql:innodb_log_file_size', '256M') }}
 innodb_flush_method     = O_DIRECT
 innodb_flush_log_at_trx_commit = 1
 sync_binlog		= 1
-key_buffer_size         = 32M
 
 max_connections         = 200
 {% if salt['pillar.get']('mysql:server_id', False) %}
