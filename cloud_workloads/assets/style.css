@@ -22,6 +22,55 @@ body {
     font-family: Arial,"Helvetica Neue",Helvetica,sans-serif;
 }
 
+div.tab-container {
+    margin-top: 15px;
+}
+
+div.tab {
+    border: 1px solid #777;
+}
+
+div.tab-content {
+    padding: 20px;
+    display: none;
+}
+
+ul.tab-nav {
+    margin: 0;
+    padding-left: 0;
+    list-style: none;
+    height: 25px;
+    float: left;
+}
+
+ul.tab-nav li {
+    height: 25px;
+    line-height: 25px;
+    float: left;
+    margin-right: 10px;
+    background: #777;
+    border-top: 1px solid #777;
+    border-right: 1px solid #777;
+    border-left: 1px solid #777;
+}
+
+ul.tab-nav li.active {
+    background: #fbfbfb;
+}
+
+ul.tab-nav li a {
+    font-family: monospace;
+    color: #fbfbfb;
+    text-shadow: 0px 0px 3px #000;
+    padding: 10px;
+}
+
+ul.tab-nav li.active a {
+    color: #369ead;
+    text-shadow: none;
+    font-weight: bolder;
+}
+
 div.exception pre {
     background: #fde4e1;
     border: 1px solid #fbd3c6;
@@ -153,7 +202,7 @@ td.score-section-heading {
     font-weight: bold;
 }
 
-td.score-label {
+td.score-label, table.breakdown td.label {
     padding: 3px 5px;
     color: #333;
     font-weight: bold;
@@ -171,6 +220,39 @@ td.score-value {
     background: #777;
     text-shadow: 0px 0px 3px #000;
     border: 1px solid #777;
+}
+
+table.breakdown {
+    width: 100%;
+    font-size: 10pt;
+}
+
+table.breakdown td {
+    padding: 3px 5px;
+    border: 1px solid #999;
+}
+
+table.breakdown td.label {
+    text-align: center;
+    background: #999;
+    color: #fbfbfb;
+    text-shadow: 0px 0px 3px #000;
+}
+
+table.breakdown td.value {
+    color #333;
+    text-align: right;
+}
+
+table.breakdown td.value.left {
+    text-align: left;
+}
+
+table.breakdown td.total {
+    text-align: right;
+    border-left: none;
+    border-bottom: none;
+    font-style: italic;
 }
 
 div.graph-container {

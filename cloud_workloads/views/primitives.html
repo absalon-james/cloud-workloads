@@ -1,40 +1,46 @@
+{%- macro breakdown(score_info, total) -%}
+    <table class="breakdown">
+    <tr>
+        <td class="label"></td>
+        <td class="label">Score</td>
+        <td class="label">Weight</td>
+        <td class="label">Normal</td>
+        <td class="label">Weighted</td>                        
+    </tr>
+    {% for key, value in score_info.iteritems() %}
+    <tr>
+        <td class="value left">{{ key }}</td>
+        <td class="value">{{ "%.2f" % value['score']|float }}</td>
+        <td class="value">{{ "%.2f" % value['weight']|float }}</td>
+        <td class="value">{{ "%.2f" % value['normal_score']|float }}</td>
+        <td class="value">{{ "%.2f" % value['weighted_score']|float }}</td>
+    </tr>
+    {% endfor %}
+    <tr>
+        <td class="total" colspan="4">Score</td>
+        <td class="value">{{ "%.2f" % total|float }}</td>
+    </tr>
+    </table>
+{% endmacro %}
+
 <fieldset id="scores">
 <legend>Your Score</legend>
     <div id="scores-chart">
         <table>
         <tr>
-            <td class="score overall" rowspan="3" id="primitives-overall" onMouseover="display_breakdown('Overall')">{{ overall_score }}</td>
-            <td class="label individual" onMouseover="display_breakdown('CPU')">CPU</td>
-            <td class="score individual" id="primitives-cpu" onMouseover="display_breakdown('CPU')">{{ cpu_score }}</td>
+            <td class="score overall" rowspan="3" id="primitives-overall">{{ overall_score }}</td>
+            <td class="label individual">CPU</td>
+            <td class="score individual" id="primitives-cpu">{{ cpu_score }}</td>
         </tr>
-        <tr onMouseover="display_breakdown('IO')">
+        <tr>
             <td class="label individual">IO</td>
             <td class="score individual" id="primitives-io">{{io_score}}</td>
         </tr>
-        <tr onMouseover="display_breakdown('Network')">
+        <tr>
             <td class="label individual">Network</td>
             <td class="score individual" id="primitives-network">{{network_score}}</td>
         </tr>
         </table>
-
-        </br>
-        <legend class="breakdown" id="breakdown-legend">Score Breakdown</legend>
-        <div class="breakdown" id="Overall-breakdown" style="display:none">
-            <!--<table><tr><td>{overall_breakdown}</td</tr></table>-->
-	    {{overall_breakdown}}
-        </div>
-        <div class="breakdown" id="CPU-breakdown" style="display:none">
-            <!--<table><tr><td>{cpu_breakdown}</td</tr></table>-->
-	    {{cpu_breakdown}}
-        </div>
-        <div class="breakdown" id="IO-breakdown" style="display:none">
-            <!--<table><tr><td>{io_breakdown}</td</tr></table>-->
-	    {{io_breakdown}}
-        </div>
-        <div class="breakdown" id="Network-breakdown" style="display:none">
-            <!--<table><tr><td>{network_breakdown}</td</tr></table>-->
-	    {{network_breakdown}}
-        </div>
     </div>
 
     <div id="scores-explanation">
@@ -47,5 +53,45 @@
             combined to produce the final score for all of the primitive benchmarks. The
             types of benchmarks included test the performance of CPU, disk and network
             operations. More specifically unixbench, filebench and iperf are used.</p>
-    </div>            
+
+        <div class="tab-container">
+            <ul class="tab-nav">
+                {% if overall_scores %}
+                <li class="active"><a href="#breakdown-overall">Overall</a></li>
+                {% endif %}
+                {% if cpu_scores %}
+                <li><a href="#breakdown-cpu">CPU</a></li>
+                {% endif %}
+                {% if io_scores %}
+                <li><a href="#breakdown-io">IO</a></li>
+                {% endif %}
+                {% if network_scores %}
+                <li><a href="#breakdown-network">Network</a></li>
+                {% endif %}
+            </ul>
+            <div class="clearfix"></div>
+            <div class="tab">
+                {% if overall_scores %}
+                <div id="breakdown-overall" class="tab-content" style="display: block;">
+                    {{ breakdown(overall_scores, overall_score) }}
+                </div>
+                {% endif %}
+                {% if cpu_scores %}
+                <div id="breakdown-cpu" class="tab-content">
+                    {{ breakdown(cpu_scores, cpu_score) }}
+                </div>
+                {% endif %}
+                {% if io_scores %}
+                <div id="breakdown-io" class="tab-content">
+                    {{ breakdown(io_scores, io_score) }}
+                </div>
+                {% endif %}
+                {% if network_scores %}
+                <div id="breakdown-network" class="tab-content">
+                    {{ breakdown(network_scores, network_score) }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
 </fieldset>

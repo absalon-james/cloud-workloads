@@ -32,22 +32,9 @@ class bench_analyzer(object):
         #dictionary of all the available scores from the json
         #ex. {"test_name": 4000.0}
         self.score_dict = create_score_dict(self.json_data)
-        #create string with html for the table and rows of the breakdown
-        breakdown_table_rows = ["<tr> \n\
-                    <td class=\"breakdown\">%s</td> \n\
-                    <td class=\"breakdown\">%s</td> \n\
-                    <td class=\"breakdown\">%s</td> \n\
-                    </tr>\n" % (key, val["weight"], val["normalizer"])
-                                for key, val in score_info.iteritems()]
-        breakdown_table = "<table> \n\
-                    <tr> \n\
-                    <td class=\"breakdown\">Input Label</td> \n\
-                    <td class=\"breakdown\">Weight</td> \n\
-                    <td class=\"breakdown\">Highest Score</td> \n\
-                    </tr> \n\
-                    %s \n\
-                    </table>" % "".join(breakdown_table_rows)
-        self.breakdown = breakdown_table
+
+        for key, value in self.score_info.iteritems():
+            value['score'] = self.score_dict.get(key)
         self.analyze()
 
     def _get_json_from_file(self, file_name):
@@ -68,12 +55,15 @@ class bench_analyzer(object):
         normal_scores_dict = {key: (100 * float(val) /
                                     float(self.score_info[key]["normalizer"]))
                               for key, val in self.score_dict.iteritems()}
-        weighted_normal_scores_list = [self.score_info[key]["weight"]*val
-                                       for key, val in
-                                       normal_scores_dict.iteritems()]
+        for key, value in self.score_info.iteritems():
+            normal_score = normal_scores_dict.get(key, 0)
+            value['normal_score'] = normal_score
+            value['weighted_score'] = value['weight'] * normal_score
+
         weight_total = sum([val["weight"]
                             for val in self.score_info.values()])
-        self.json_data["overall_score"] = self._avg(
-            weighted_normal_scores_list, weight_total)
+        weight_list = [value['weighted_score']
+                       for value in self.score_info.itervalues()]
+        self.json_data["overall_score"] = self._avg(weight_list, weight_total)
         self.overall_score = self.json_data["overall_score"]
         self.json_data["status"] = "Success"

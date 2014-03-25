@@ -1755,8 +1755,10 @@ sub summarizeRunJSON {
 
 sub combineJSON {
     my ($reportJSON) = @_;
-    system("sed -i ':a;N;\$!ba;s/\\n/ /g' " . $reportJSON);
-    system("sed -i 's/}\\s*{/,/g' " . $reportJSON);
+    system("sed -i 's/\$/,/g' " . $reportJSON);
+    system("truncate -s -2 " . $reportJSON);
+    system("sed -i '1i[' " . $reportJSON);
+    system("echo '\n]' >> " . $reportJSON);
 }
 ############################################################################
 # MAIN
@@ -1812,7 +1814,7 @@ sub main {
                             die("Run: can't write to $reportFile\n");
     open(my $reportFd2, ">", $reportHtml) ||
                             die("Run: can't write to $reportHtml\n");
-    open(my $reportFd3, ">", $reportJSON) ||
+    open(my $reportFd3, ">>", $reportJSON) ||
                             die("Run: can't write to $reportJSON\n");
     printf $reportFd "   BYTE UNIX Benchmarks (Version %s)\n\n", $version;
     runHeaderHtml($systemInfo, $reportFd2);

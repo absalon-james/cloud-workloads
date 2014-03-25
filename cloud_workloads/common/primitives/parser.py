@@ -6,7 +6,11 @@ class bench_parser(dict):
         super(bench_parser, self).__init__(self.parse(lines))
 
     def update_with_json(self, str_data):
-            json_data = json.loads(str_data)
+        json_data = json.loads(str_data)
+        if isinstance(json_data, list):
+            for idx, value in enumerate(json_data):
+                self.update({idx: value})
+        else:
             self.update(json_data)
 
 

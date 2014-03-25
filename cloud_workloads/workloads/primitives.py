@@ -1,5 +1,6 @@
 import cStringIO
 import os
+from collections import OrderedDict
 from cloud_workloads.common.primitives.bench_analyzer import bench_analyzer
 from cloud_workloads.common.primitives.parser import \
     io_parser, cpu_parser, network_parser
@@ -27,12 +28,25 @@ class Workload(BaseWorkload):
         'target_role': 'primitives_target',
         'primitives_dir': '/opt/primitives',
 
-        'cpu_tests': ['dhry2reg'],
+        'cpu_tests': [
+            'dhry2reg',
+            'whetstone-double',
+            'syscall',
+            'pipe',
+            #'context1', # Having trouble running this one through salt
+            'spawn',
+            'execl'
+        ],
         'cpu_dir': 'UnixBench',
         'cpu_iterations_per_test': 10,
-        'cpu_parallel_copies': 1,
 
-        'io_tests': ['randomrw.f'],
+        'io_tests': [
+            'randomrw.f',
+            #'singlestreamreaddirect.f',
+            'singlestreamread.f',
+            'singlestreamwritedirect.f',
+            'singlestreamwrite.f'
+        ],
         'io_dir': 'filebench-1.4.9.1',
 
         'network_dir': 'iperf-2.0.5'
@@ -141,9 +155,8 @@ class Workload(BaseWorkload):
 
         :returns: String
         """
-        cmd = './Run %s -c %s -i %s' % (
-            ','.join(self.config['cpu_tests']),
-            self.config['cpu_parallel_copies'],
+        cmd = './Run %s -i %s' % (
+            ' '.join(self.config['cpu_tests']),
             self.config['cpu_iterations_per_test']
         )
 
@@ -158,11 +171,6 @@ class Workload(BaseWorkload):
             }
         }
         return kwargs
-
-        #tests = self.cpu_tests
-        #return [script] + tests + \
-        #       ['-c', str(self.cpu_parallel_copies),
-        #        '-i', str(self.cpu_iterations_per_test)]
 
     def io_commands(self):
         """
@@ -223,15 +231,19 @@ class Workload(BaseWorkload):
 
         #take output and analyze it. Basically take weighted averages of
         #results
-        ub_info = {
-            "dhry2reg":
-            {
-                "normalizer": 119342529.0,
-                "weight": 1
-            }
+        ub_info = OrderedDict()
+        ub_info['run_1'] = {
+            "normalizer": 1000,
+            "weight": 1
         }
-        ub_create_score_dict = lambda x: {test_name: x[test_name]["score"]
-                                          for test_name in x["list"]}
+        ub_info['run_2'] = {
+            "normalizer": 3000,
+            "weight": 1
+        }
+
+        ub_create_score_dict = \
+            lambda x: {"run_%d" % test_run: x[test_run]["index"]["system"]
+                       for test_run in [1, 2]}
         self.cpu_analyzer = bench_analyzer(ub_info,
                                            ub_create_score_dict,
                                            json_data=cpu_data)
@@ -251,12 +263,26 @@ class Workload(BaseWorkload):
             fb_data.parse(kwargs['arg'][0], output)
 
         #analyze results. as before this is essentially a weighted average
-        fb_info = {
-            "randomrw.f":
-            {
-                "normalizer": 120.0,
-                "weight": 1
-            }
+        fb_info = OrderedDict()
+        fb_info['randomrw.f'] = {
+            "normalizer": 120.0,
+            "weight": 1
+        }
+        #fb_info['singlestreamreaddirect.f'] = {
+        #    "normalizer": 120.0,
+        #    "weight": 1
+        #}
+        fb_info['singlestreamread.f'] = {
+            "normalizer": 1000.0,
+            "weight": 1
+        }
+        fb_info['singlestreamwritedirect.f'] = {
+            "normalizer": 1000.0,
+            "weight": 1
+        }
+        fb_info['singlestreamwrite.f'] = {
+            "normalizer": 1000.0,
+            "weight": 1
         }
         fb_create_score_dict = lambda x: {key: val
                                           for key, val in x.iteritems()}
@@ -283,18 +309,17 @@ class Workload(BaseWorkload):
         network_data = network_parser(
             cStringIO.StringIO(runner_resp['stdout'])
         )
-        network_info = {
-            "conn_0":
-            {
-                "normalizer": 1024.0,
-                "weight": 1
-            },
-            "conn_1":
-            {
-                "normalizer": 1024.0,
-                "weight": 1
-            }
+
+        network_info = OrderedDict()
+        network_info['conn_0'] = {
+            "normalizer": 1024.0,
+            "weight": 1
         }
+        network_info['conn_1'] = {
+            "normalizer": 1024.0,
+            "weight": 1
+        }
+
         network_create_score_dict = \
             lambda x: {"conn_%s" % num:
                        x["connections"][conn]["bandwidth_mb/sec"]
@@ -317,23 +342,20 @@ class Workload(BaseWorkload):
         #--------------------Overall Score------------------
         #Get scores for each type of test and put them together
         #as the overall score
-        overall_info = {
-            "unixbench":
-            {
-                "normalizer": 100.0,
-                "weight": 1
-            },
-            "filebench":
-            {
-                "normalizer": 100.0,
-                "weight": 1
-            },
-            "iperf":
-            {
-                "normalizer": 100.0,
-                "weight": 1
-            }
+        overall_info = OrderedDict()
+        overall_info['unixbench'] = {
+            "normalizer": 100.0,
+            "weight": 1
         }
+        overall_info['filebench'] = {
+            "normalizer": 100.0,
+            "weight": 1
+        }
+        overall_info['iperf'] = {
+            "normalizer": 100.0,
+            "weight": 1
+        }
+
         overall_create_score_dict = lambda x: {key: val
                                                for key, val in x.iteritems()}
         overall_data = {
@@ -356,10 +378,9 @@ class Workload(BaseWorkload):
             'cpu_score': int(self.cpu_analyzer.overall_score),
             'io_score': int(self.io_analyzer.overall_score),
             'network_score': int(self.network_analyzer.overall_score),
-            'overall_breakdown': self.overall_analyzer.breakdown,
-            'cpu_breakdown': self.cpu_analyzer.breakdown,
-            'io_breakdown': self.io_analyzer.breakdown,
-            'network_breakdown': self.network_analyzer.breakdown
-
+            'overall_scores': self.overall_analyzer.score_info,
+            'cpu_scores': self.cpu_analyzer.score_info,
+            'io_scores': self.io_analyzer.score_info,
+            'network_scores': self.network_analyzer.score_info
         })
         return View('primitives.html', **(self.view_dict))

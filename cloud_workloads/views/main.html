@@ -8,15 +8,20 @@
         <script type="text/javascript" src="graph.js"></script>
         <link rel="stylesheet" type="text/css" href="style.css" />
         <script type="text/javascript">
-        function display_breakdown(score_type) {
-            var my_labels=["Overall-breakdown", "CPU-breakdown", "IO-breakdown", "Network-breakdown"];
-            for(var i = 0; i < my_labels.length; i++) {
-                $("#"+my_labels[i]).css("display", "none");
-            }
-            var id=score_type.concat("-breakdown");
-            $("#"+id).css("display", "block");
-            $("#breakdown-legend").html(score_type+" Breakdown");
-        }
+        $(function() {
+            $(".tab-nav li a").click(function(e) {
+                e.preventDefault();
+                $ul = $(this).parent().parent();
+                $ul.find("li").removeClass("active");
+                $(this).parent().addClass("active");
+
+                var tabId = $(this).attr("href");
+                console.log("Tab is: " + tabId);
+                $(this).parent().parent().parent().find(".tab-content").hide();
+                $(tabId + ".tab-content").fadeIn();
+                return true;
+            });
+        });
         </script>
     </head>
     <body>

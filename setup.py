@@ -22,9 +22,12 @@ setup(
     packages=find_packages(),
     zip_safe=True,
     install_requires=['argparse', 'Jinja2', 'netifaces', 'paramiko',
-        'progressbar', 'PyYAML'],
+                      'progressbar', 'PyYAML'],
     data_files=data_files,
-    scripts=['bin/cloud-workloads-runner', 'bin/cloud-workloads-minion-installer'],
+    scripts=[
+        'bin/cloud-workloads-runner',
+        'bin/cloud-workloads-minion-installer'
+    ],
     cmdclass={
         'install': PostDownloadInstall,
         'develop': PostDownloadDevelop
