@@ -227,7 +227,11 @@ class Workload(BaseWorkload):
         }
         data_resp = self.client.cmd(runner.id_, 'cmd.run_all', **kwargs)
         data_resp = data_resp.values()[0]
+
+        print "Cpu stdout"
+        print data_resp['stdout']
         cpu_data.update_with_json(data_resp['stdout'])
+
 
         #take output and analyze it. Basically take weighted averages of
         #results
@@ -260,29 +264,36 @@ class Workload(BaseWorkload):
             resp = self.client.cmd(runner.id_, 'cmd.run_all', **kwargs)
             resp = resp.values()[0]
             output = cStringIO.StringIO(resp['stdout'])
+            print "\n\nStd out for %s" % kwargs
+            print resp['stdout']
             fb_data.parse(kwargs['arg'][0], output)
 
         #analyze results. as before this is essentially a weighted average
         fb_info = OrderedDict()
         fb_info['randomrw.f'] = {
             "normalizer": 120.0,
-            "weight": 1
+            "weight": 1,
+            "units": "Mbits/sec"
         }
         #fb_info['singlestreamreaddirect.f'] = {
         #    "normalizer": 120.0,
-        #    "weight": 1
+        #    "weight": 1,
+        #    "units": "Mbits/sec"
         #}
         fb_info['singlestreamread.f'] = {
             "normalizer": 1000.0,
-            "weight": 1
+            "weight": 1,
+            "units": "Mbits/sec"
         }
         fb_info['singlestreamwritedirect.f'] = {
             "normalizer": 1000.0,
-            "weight": 1
+            "weight": 1,
+            "units": "Mbits/sec"
         }
         fb_info['singlestreamwrite.f'] = {
             "normalizer": 1000.0,
-            "weight": 1
+            "weight": 1,
+            "units": "Mbits/sec"
         }
         fb_create_score_dict = lambda x: {key: val
                                           for key, val in x.iteritems()}
@@ -306,6 +317,8 @@ class Workload(BaseWorkload):
                                       'cmd.run_all',
                                       **runner_kwargs)
         runner_resp = runner_resp.values()[0]
+        print "\n\nStdout for nework"
+        print runner_resp['stdout']
         network_data = network_parser(
             cStringIO.StringIO(runner_resp['stdout'])
         )
@@ -313,11 +326,13 @@ class Workload(BaseWorkload):
         network_info = OrderedDict()
         network_info['conn_0'] = {
             "normalizer": 1024.0,
-            "weight": 1
+            "weight": 1,
+            "units": 'Mbits/sec'
         }
         network_info['conn_1'] = {
             "normalizer": 1024.0,
-            "weight": 1
+            "weight": 1,
+            "units": 'Mbits/sec'
         }
 
         network_create_score_dict = \

@@ -1,23 +1,21 @@
+{% from "strings.jinja" import strings with context %}
+
 {%- macro breakdown(score_info, total) -%}
     <table class="breakdown">
     <tr>
         <td class="label"></td>
+        <td class="label">Measured</td>
         <td class="label">Score</td>
-        <td class="label">Weight</td>
-        <td class="label">Normal</td>
-        <td class="label">Weighted</td>                        
     </tr>
     {% for key, value in score_info.iteritems() %}
     <tr>
-        <td class="value left">{{ key }}</td>
-        <td class="value">{{ "%.2f" % value['score']|float }}</td>
-        <td class="value">{{ "%.2f" % value['weight']|float }}</td>
-        <td class="value">{{ "%.2f" % value['normal_score']|float }}</td>
+        <td class="value left">{{ strings.get(key, key) }}</td>
+        <td class="value">{{ "%.2f %s" % (value['score']|float, value.get('units', '')) }}</td>
         <td class="value">{{ "%.2f" % value['weighted_score']|float }}</td>
     </tr>
     {% endfor %}
     <tr>
-        <td class="total" colspan="4">Score</td>
+        <td class="total" colspan="2">Total Score</td>
         <td class="value">{{ "%.2f" % total|float }}</td>
     </tr>
     </table>
