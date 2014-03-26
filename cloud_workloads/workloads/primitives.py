@@ -232,7 +232,6 @@ class Workload(BaseWorkload):
         print data_resp['stdout']
         cpu_data.update_with_json(data_resp['stdout'])
 
-
         #take output and analyze it. Basically take weighted averages of
         #results
         ub_info = OrderedDict()
