@@ -1,6 +1,5 @@
 import os
 import urllib2
-from progressbar import FileTransferSpeed, Percentage, ProgressBar
 from setuptools.command.install import install
 from setuptools.command.develop import develop
 
@@ -8,21 +7,6 @@ from setuptools.command.develop import develop
 class PostInstallDownloader(object):
 
     CHUNK_SIZE = 64 * 1024
-
-    def widgets(self, download_dict):
-        """
-        Creates a list of widgets for use with progressbar.
-
-        @param download_dict - Dictionary describing download
-        @returns - List of widgets
-        """
-        return [
-            Percentage(),
-            ' ',
-            FileTransferSpeed(),
-            ' ',
-            download_dict['dst']
-        ]
 
     def prep_dir(self, download_dict):
         """
@@ -43,7 +27,7 @@ class PostInstallDownloader(object):
         @param download_dict - Download dictionary describing download
 
         """
-        print "\nDownloading %s" % download_dict['dst']
+        print "\nDownloading %s" % download_dict['src']
 
     def download_footer(self, download_dict):
         """
@@ -52,7 +36,7 @@ class PostInstallDownloader(object):
         @param download_dict - Download dictionary describing download
 
         """
-        print "\n"
+        print "Saved to %s" % download_dict['dst']
 
     def download_many(self, download_list):
         """
@@ -76,21 +60,15 @@ class PostInstallDownloader(object):
 
         """
         self.prep_dir(download_dict)
-        #self.download_header(download_dict)
+        self.download_header(download_dict)
         req = urllib2.urlopen(download_dict['src'])
-        content_length = int(req.info().getheader('Content-Length'))
-        widgets = self.widgets(download_dict)
-        pbar = ProgressBar(widgets=widgets, maxval=content_length)
-        pbar.start()
         so_far = 0
         with open(download_dict['dst'], 'w') as f:
             write = lambda: req.read(self.CHUNK_SIZE)
             for chunk in iter(write, ''):
                 so_far += len(chunk)
                 f.write(chunk)
-                pbar.update(so_far)
-        pbar.finish()
-        #self.download_footer(download_dict)
+        self.download_footer(download_dict)
 
 
 # TODO - Maybe move this to json and load it in

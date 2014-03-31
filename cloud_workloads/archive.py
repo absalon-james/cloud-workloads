@@ -146,7 +146,6 @@ class HtmlArchive(object):
         @param assets - List of dicts describing assets
 
         """
-
         for asset in assets:
             dst = os.path.join(targetdir, asset['filename'])
             src = asset['abspath']
