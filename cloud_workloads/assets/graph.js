@@ -233,7 +233,8 @@ MinionGraph.prototype.render = function(selector_string) {
                 .append('circle')
                 .attr('cx', 0)
                 .attr('cy', 0)
-                .attr('r', style.radius);
+                .attr('r', style.radius)
+                .attr('fill', 'url(#node-g1)');
         });
         svgNodes = nodes;
         return nodes;
@@ -269,6 +270,7 @@ MinionGraph.prototype.render = function(selector_string) {
         var $this = d3.select(this);
         $this.classed('active', true);
         $this.select('circle')
+            .attr('fill', 'url(#node-g2)')
             .transition()
             .duration(style.duration)
             .attr('r', style.radiusActive);
@@ -282,6 +284,7 @@ MinionGraph.prototype.render = function(selector_string) {
         var $this = d3.select(this);
         $this.classed('active', false);
         $this.select('circle')
+            .attr('fill', 'url(#node-g1)')
             .transition()
             .duration(style.duration)
             .attr('r', style.radius);
