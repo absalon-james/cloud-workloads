@@ -1,3 +1,4 @@
+import collections
 import os
 import shutil
 import traceback
@@ -55,7 +56,7 @@ class Runner(object):
         """
         self.config = config
         self.credentials = credentials
-        self.views = []
+        self.views = collections.OrderedDict()
         self.primitives_view = None
 
     def run(self):
@@ -117,21 +118,21 @@ class Runner(object):
         finally:
             workload.undeploy()
 
-        if workload.is_primitive:
-            self.primitives_view = view
-        else:
-            self.views.append(view)
+        self.views[workload.name] = view
 
     def view(self):
         """
         Creates a combined view containing all workload output.
 
         :returns: String
+
         """
         return View(
             'main.html',
-            workloads=self.views,
-            primitives=self.primitives_view
+            primitives=self.views.get('Primitives', None),
+            workloads={key: value
+                       for key, value in self.views.iteritems()
+                       if key != 'Primitives'}
         )
 
     def output_html(self, outdir):

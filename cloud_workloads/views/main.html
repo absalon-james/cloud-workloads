@@ -9,35 +9,68 @@
         <link rel="stylesheet" type="text/css" href="style.css" />
         <script type="text/javascript">
         $(function() {
-            $(".tab-nav li a").click(function(e) {
+            $(".tab-nav li").click(function(e) {
                 e.preventDefault();
-                $ul = $(this).parent().parent();
+                $ul = $(this).parent();
                 $ul.find("li").removeClass("active");
-                $(this).parent().addClass("active");
+                $(this).addClass("active");
 
-                var tabId = $(this).attr("href");
-                console.log("Tab is: " + tabId);
-                $(this).parent().parent().parent().find(".tab-content").hide();
+                var tabId = $(this).find('a').attr("href");
+                $(this).parent().parent().find(".tab-content").hide();
                 $(tabId + ".tab-content").fadeIn();
                 return true;
             });
+
+            setTimeout(function() {
+                $(".tab-container").each(function() {
+                    $(this).find(".tab-content").slice(1).hide();
+                });
+                $("div.loading").remove();
+                $("div.page-container").animate({opacity: 1.0}, 500);
+            }, 1000);            
         });
         </script>
     </head>
     <body>
+        <div class="loading">Loading...</div>
+        {%- macro tab_nav(name, active) -%}
+            {% set navclass = "" %}
+            {% if active %}
+                {% set navclass = "active" %}
+            {% endif %}            
+            <li class="{{ navclass }}"><a href="#tab-{{ name }}">{{ name }}</a></li>
+        {% endmacro %}
+        {%- macro tab(name, content, active) -%}
+            {% set tabstyle = "" %}
+            {% if active %}
+                {% set tabstyle = "display: block;" %}
+            {% endif %}
+            <div id="tab-{{ name }}" class="tab-content" style="{{ tabstyle }}">
+                {{ content }}
+            </div>
+        {% endmacro %}
         <div class="page-container">
         {% if primitives %}
             {{ primitives }}
         {% endif %}
 
-        {% if workloads %}
-            <fieldset>
-            <legend>Real World Applications</legend>
-            {% for workload in workloads %}
-                {{ workload }}
-                <hr />
-            {% endfor %}
-            </fieldset>
+        {% if workloads %} 
+        <fieldset>
+        <legend>Real World Applications</legend>
+            <div class="tab-container">
+                <ul class="tab-nav">
+                {% for name in workloads.iterkeys() %}
+                    {{ tab_nav(name, loop.first) }}
+                {% endfor %}
+                </ul>
+                <div class="clearfix"></div>
+                <div class="tab">
+                    {% for name, workload in workloads.iteritems() %}
+                        {{ tab(name, workload, loop.first) }}
+                    {% endfor %}
+                </div>
+            </div>
+        </fieldset>
         {% endif %}
         </div>
     </body>

@@ -100,15 +100,6 @@ class Workload(BaseWorkload):
         finally:
             os.chdir(oldcwd)
 
-    #def deploy(self):
-    #    """
-    #    Need to generate keys in addition to normal deployments.
-    #    Override parent class deploy() and preempt with generate keys
-    #
-    #    """
-    #    self.generate_keys()
-    #    super(Workload, self).deploy()
-
     @property
     def name(self):
         """

@@ -3,6 +3,7 @@ minion_pool:
   expr_form: 'glob'
 
 primitives:
+  cpu_iterations_per_test: 1
   workload: primitives
   instances:
     - roles:
