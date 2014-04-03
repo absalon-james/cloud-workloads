@@ -39,7 +39,7 @@ class Workload(object):
         self.config.update(config)
 
         # Used to store information to be pushed to the html view
-        self.view_dict = {}
+        self.data_dict = {}
 
     def deploy(self):
         """
@@ -99,7 +99,7 @@ class Workload(object):
         """
         self.instances = []
         instances = self.config.get('instances', [])
-        self.view_dict['minions'] = []
+        self.data_dict['minions'] = []
         for i in instances:
             roles = set(i['roles'])
             minion = self.pool.get_minion()
@@ -128,8 +128,8 @@ class Workload(object):
             minion_dict = {}
             minion_dict.update(minion.data)
             minion_dict.update(instance_role=list(roles))
-            self.view_dict['minions'] = []
-            self.view_dict['minions'].append(minion_dict)
+            self.data_dict['minions'] = []
+            self.data_dict['minions'].append(minion_dict)
 
     def apply_roles(self):
         """
@@ -151,7 +151,7 @@ class Workload(object):
         self.client.set_roles(minion_sets, role_sets, timeout=30)
 
         # Update the view dict with the graph.
-        self.view_dict['minion_graph'] = MinionGraph(
+        self.data_dict['minion_graph'] = MinionGraph(
             [i['minion'] for i in self.instances],
             self.MINION_GRAPH_EDGE_MAP
         )
@@ -243,14 +243,14 @@ class Workload(object):
         """Runs the workload"""
         pass
 
-    def view(self):
+    def data(self):
         """
-        Should return a string view of this workload.  The string should be
-        valid html that can be dumped with other html.
+        Should return a dict of data that can be passed to some renderering
+        system.
 
-        :returns: String html representation of workload output
+        :returns: Dict
         """
-        return "missing view method"
+        return {}
 
     @property
     def name(self):

@@ -32,7 +32,7 @@ class BaseJobException(Exception):
             msgs.append(self.get_affected_job_msg(current))
             current = current.chain
         if len(msgs) > 0:
-            return ("This failure have have caused problems in a sequence."
+            return ("This failure may have caused problems in a sequence."
                     "\n\t%s") % "\n\t".join(msgs)
         return ""
 

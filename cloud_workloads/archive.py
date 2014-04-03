@@ -32,16 +32,17 @@ class HtmlArchive(object):
              |--asset2.js
              |--asset3.css
     """
-    time_format = '%y-%m-%d--%H-%M-%S'
+    time_format = '%Y-%m-%d--%H-%M-%S'
 
-    def __init__(self, basedir):
+    def __init__(self, config, basedir):
         """
         Initializer
 
         @param basedir - Output directory to contain the archive
 
         """
-        self.basedir = basedir
+        self.basedir = config['renderer']['html_doc_root']
+        self.basedir = os.path.join(self.basedir, basedir)
 
         # Make sure directory exists
         self.create_dir(self.basedir)
@@ -130,7 +131,7 @@ class HtmlArchive(object):
         self.copy_assets(self.assets, resultdir)
 
         # Create symlink from basedir/latest.html to index.html
-        link = os.path.join(self.basedir, 'latest.html')
+        link = os.path.join(self.basedir, 'index.html')
         if os.path.islink(link):
             os.unlink(link)
         os.symlink(filename, link)

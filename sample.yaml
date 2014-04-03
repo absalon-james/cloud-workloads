@@ -2,8 +2,11 @@ minion_pool:
   target: '*'
   expr_form: 'glob'
 
+renderer:
+  html_doc_root: '/var/www'
+
 primitives:
-  cpu_iterations_per_test: 1
+#  cpu_iterations_per_test: 10
   workload: primitives
   instances:
     - roles:

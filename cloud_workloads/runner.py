@@ -1,8 +1,5 @@
 import collections
-import os
-import shutil
 import traceback
-from common.view import View, ExceptionView
 from remote.client import Client
 from remote.pool import MinionPool
 from remote.job import MultiJobException
@@ -57,6 +54,7 @@ class Runner(object):
         self.config = config
         self.credentials = credentials
         self.views = collections.OrderedDict()
+        self.workloads = []
         self.primitives_view = None
 
     def run(self):
@@ -107,56 +105,14 @@ class Runner(object):
         try:
             workload.deploy()
             workload.run()
-            view = workload.view()
 
         # Catch salt job related exceptions
         except MultiJobException as e:
-            trace = traceback.format_exc()
-            view = ExceptionView(workload, trace)
+            print "Multi job problem found. need to save the trace"
+            workload.data_dict['exception_trace'] = traceback.format_exc()
             print e
 
         finally:
             workload.undeploy()
 
-        self.views[workload.name] = view
-
-    def view(self):
-        """
-        Creates a combined view containing all workload output.
-
-        :returns: String
-
-        """
-        return View(
-            'main.html',
-            primitives=self.views.get('Primitives', None),
-            workloads={key: value
-                       for key, value in self.views.iteritems()
-                       if key != 'Primitives'}
-        )
-
-    def output_html(self, outdir):
-        """
-        Creates the directory outdir and copies over javascript and css
-        assests. Generates the html to view the results.
-
-        @param outdir - String output directory
-
-        """
-        # try to create output directory with copy of assets
-        assets_dir = os.path.dirname(__file__)
-        assets_dir = os.path.abspath(os.path.join(assets_dir, 'assets'))
-        try:
-            shutil.copytree(assets_dir, outdir)
-        except OSError as e:
-            print "Unable to create output directory: %s" % outdir
-            print e
-            exit()
-
-        output_file = os.path.join(outdir, 'index.html')
-        try:
-            with open(output_file, 'w') as f:
-                f.write(self.view())
-        except IOError as e:
-            print "Unable to write results to %s." % output_file
-            print e
+        self.workloads.append(workload)

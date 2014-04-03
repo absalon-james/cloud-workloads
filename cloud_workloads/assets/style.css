@@ -58,6 +58,15 @@ div.tab-container {
     margin-top: 15px;
 }
 
+div.footer {
+    text-align: center;
+    text-shadow: 0px 0px 3px #000;    
+}
+
+div.footer a {
+    color: #333;
+}
+
 div.tab {
     border: 1px solid #777;
 }

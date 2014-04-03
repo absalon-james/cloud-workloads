@@ -4,6 +4,7 @@ import argparse
 from cloud_workloads.remote.credentials import Pam
 from cloud_workloads.runner import Runner
 from cloud_workloads.archive import HtmlArchive
+from cloud_workloads.renderers import HtmlRenderer
 from cloud_workloads.common.config import YamlConfig
 
 
@@ -14,7 +15,8 @@ def parse_args():
     help_ = "Yaml configuration file describing cloud workloads."
     parser.add_argument('config_file', help=help_)
 
-    help_ = "Output directory to place html, css, and javascript files."
+    help_ = ("Output directory in your doc root to place html, css, "
+             "and javascript files.")
     parser.add_argument('output_dir', help=help_)
 
     help_ = "User for salt external authentication."
@@ -34,11 +36,13 @@ if __name__ == "__main__":
     else:
         credentials = None
 
-    # Start the archive early
-    archive = HtmlArchive(args.output_dir)
-
     # Get the configuration
     config = YamlConfig(args.config_file)
+
+    # Start the archive early
+    archive = HtmlArchive(config, args.output_dir)
+
     runner = Runner(config, credentials=credentials)
     runner.run()
-    archive.archive(runner.view())
+    view = HtmlRenderer(args.output_dir, runner.workloads)
+    archive.archive(view)

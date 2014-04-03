@@ -1,5 +1,4 @@
 from cloud_workloads.common.gatling.workload import Workload as GatlingWorkload
-from cloud_workloads.common.view import View
 
 
 class Workload(GatlingWorkload):
@@ -69,20 +68,22 @@ class Workload(GatlingWorkload):
         """
         return super(Workload, self).command('magento.CheckoutSimulation')
 
-    def view(self):
+    def data(self):
         """
         Returns an html formatted string/view for this workload.
 
         @return - String
         """
-        run = self.best_run
-        active_sessions_plot = run['stats'].sessions_per_second_plot
-        self.view_dict.update({
-            'users': run.users,
-            'duration': run.duration,
-            'mean_response_time': run.mean_response_time,
-            'requests_per_second_plot': run['stats'].requests_per_second_plot,
-            'active_sessions_per_second_plot': active_sessions_plot,
-            'response_times_plot': run['stats'].response_times_plot
-        })
-        return View('magento.html', **(self.view_dict))
+        if not self.data_dict.get('exception_trace'):
+            run = self.best_run
+            active_sessions_plot = run['stats'].sessions_per_second_plot
+            self.data_dict.update({
+                'users': run.users,
+                'duration': run.duration,
+                'mean_response_time': run.mean_response_time,
+                'requests_per_second_plot':
+                run['stats'].requests_per_second_plot,
+                'active_sessions_per_second_plot': active_sessions_plot,
+                'response_times_plot': run['stats'].response_times_plot
+            })
+        return self.data_dict

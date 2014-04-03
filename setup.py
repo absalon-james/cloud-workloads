@@ -1,6 +1,7 @@
 from install_utils import readme, find_data_files
 from post_install import PostDownloadInstall, PostDownloadDevelop
 from setuptools import setup, find_packages
+from cloud_workloads.meta import version, license
 
 description = (
     "Runs various cloud workloads and attempts "
@@ -13,12 +14,12 @@ data_files += find_data_files('states', '/srv/salt')
 
 setup(
     name="cloud_workloads",
-    version="0.1",
+    version=version,
     description=description,
     long_description=readme(),
     author="James Absalon, Daniel Curran",
     author_email="james.absalon@rackspace.com",
-    license="MIT",
+    license=license,
     packages=find_packages(),
     include_package_data=True,
     package_data={'cloud_workloads': ['views/*', 'assets/*']},

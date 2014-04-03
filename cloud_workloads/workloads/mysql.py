@@ -1,7 +1,6 @@
 import cStringIO
 import os
 from cloud_workloads.common.workload import Workload as BaseWorkload
-from cloud_workloads.common.view import View
 
 
 class Iteration(dict):
@@ -222,17 +221,18 @@ class Workload(BaseWorkload):
         return [{'x': it.get('warehouses'),
                 'y': it.get('tpm')} for it in self._results]
 
-    def view(self):
+    def data(self):
         """
         Should return a string view of this workload.  The string should be
         valid html that can be dumped with other html.
 
         :returns: String html representation of workload output
         """
-        best_run = self.best_run
-        self.view_dict.update({
-            'tpm': best_run.get('tpm'),
-            'warehouses': best_run.get('warehouses'),
-            'tpm_plot': self.tpm_plot
-        })
-        return View('mysql.html', **(self.view_dict))
+        if not self.data_dict.get('exception_trace'):
+            best_run = self.best_run
+            self.data_dict.update({
+                'tpm': best_run.get('tpm'),
+                'warehouses': best_run.get('warehouses'),
+                'tpm_plot': self.tpm_plot
+            })
+        return self.data_dict

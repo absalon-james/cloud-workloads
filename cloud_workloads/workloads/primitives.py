@@ -4,7 +4,6 @@ from collections import OrderedDict
 from cloud_workloads.common.primitives.bench_analyzer import bench_analyzer
 from cloud_workloads.common.primitives.parser import \
     io_parser, cpu_parser, network_parser
-from cloud_workloads.common.view import View
 from cloud_workloads.common.workload import Workload as BaseWorkload
 
 
@@ -205,7 +204,7 @@ class Workload(BaseWorkload):
         return {
             'remote': {'arg': ('iperf -s',),
                        'timeout': 360},
-            'local':  {'arg': ('iperf -c %s -d' % remote_host,),
+            'local':  {'arg': ('iperf -c %s -d -f m' % remote_host,),
                        'timeout': 360}
         }
 
@@ -228,8 +227,6 @@ class Workload(BaseWorkload):
         data_resp = self.client.cmd(runner.id_, 'cmd.run_all', **kwargs)
         data_resp = data_resp.values()[0]
 
-        print "Cpu stdout"
-        print data_resp['stdout']
         cpu_data.update_with_json(data_resp['stdout'])
 
         #take output and analyze it. Basically take weighted averages of
@@ -263,8 +260,6 @@ class Workload(BaseWorkload):
             resp = self.client.cmd(runner.id_, 'cmd.run_all', **kwargs)
             resp = resp.values()[0]
             output = cStringIO.StringIO(resp['stdout'])
-            print "\n\nStd out for %s" % kwargs
-            print resp['stdout']
             fb_data.parse(kwargs['arg'][0], output)
 
         #analyze results. as before this is essentially a weighted average
@@ -316,8 +311,6 @@ class Workload(BaseWorkload):
                                       'cmd.run_all',
                                       **runner_kwargs)
         runner_resp = runner_resp.values()[0]
-        print "\n\nStdout for nework"
-        print runner_resp['stdout']
         network_data = network_parser(
             cStringIO.StringIO(runner_resp['stdout'])
         )
@@ -381,20 +374,21 @@ class Workload(BaseWorkload):
                                                overall_create_score_dict,
                                                json_data=overall_data)
 
-    def view(self):
+    def data(self):
         """
         Returns an html formatted string.
 
         @return - String
         """
-        self.view_dict.update({
-            'overall_score': int(self.overall_analyzer.overall_score),
-            'cpu_score': int(self.cpu_analyzer.overall_score),
-            'io_score': int(self.io_analyzer.overall_score),
-            'network_score': int(self.network_analyzer.overall_score),
-            'overall_scores': self.overall_analyzer.score_info,
-            'cpu_scores': self.cpu_analyzer.score_info,
-            'io_scores': self.io_analyzer.score_info,
-            'network_scores': self.network_analyzer.score_info
-        })
-        return View('primitives.html', **(self.view_dict))
+        if not self.data_dict.get('exception_trace'):
+            self.data_dict.update({
+                'overall_score': int(self.overall_analyzer.overall_score),
+                'cpu_score': int(self.cpu_analyzer.overall_score),
+                'io_score': int(self.io_analyzer.overall_score),
+                'network_score': int(self.network_analyzer.overall_score),
+                'overall_scores': self.overall_analyzer.score_info,
+                'cpu_scores': self.cpu_analyzer.score_info,
+                'io_scores': self.io_analyzer.score_info,
+                'network_scores': self.network_analyzer.score_info
+            })
+        return self.data_dict

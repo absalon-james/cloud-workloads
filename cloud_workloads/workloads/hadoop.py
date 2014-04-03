@@ -3,7 +3,6 @@ import os
 import subprocess
 import time
 from cloud_workloads.common.workload import Workload as BaseWorkload
-from cloud_workloads.common.view import View
 
 
 class TeraResult(dict):
@@ -188,13 +187,16 @@ class Workload(BaseWorkload):
         #print "Stderr: ", terasort_resp.get('stderr', 'woops')
         self.result['terasort'] = TeraResult(terasort_resp, start, end)
 
-    def view(self):
+    def data(self):
         """
         Should return a string view of this workload.  The string should be
         valid html that can be dumped with other html.
 
         :returns: String html representation of workload output
         """
+
+        if self.data_dict.get('exception_trace'):
+            return self.data_dict
 
         result = self.result
 
@@ -225,7 +227,7 @@ class Workload(BaseWorkload):
         terasort_reduce_tasks = \
             result['terasort'].get('Launched reduce tasks', 0)
 
-        self.view_dict.update({
+        self.data_dict.update({
             'numrecords': numrecords,
             'teragen_duration': teragen_duration,
             'teragen_map_tasks': teragen_map_tasks,
@@ -234,4 +236,4 @@ class Workload(BaseWorkload):
             'terasort_reduce_tasks': terasort_reduce_tasks,
             'terasort_data_points': datapoints
         })
-        return View('hadoop.html', **(self.view_dict))
+        return self.data_dict

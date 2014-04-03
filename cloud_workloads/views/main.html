@@ -33,19 +33,19 @@
     </head>
     <body>
         <div class="loading">Loading...</div>
-        {%- macro tab_nav(name, active) -%}
+        {%- macro tab_nav(id, name, active) -%}
             {% set navclass = "" %}
             {% if active %}
                 {% set navclass = "active" %}
             {% endif %}            
-            <li class="{{ navclass }}"><a href="#tab-{{ name }}">{{ name }}</a></li>
+            <li class="{{ navclass }}"><a href="#tab-{{ name }}-{{ id }}">{{ name }}</a></li>
         {% endmacro %}
-        {%- macro tab(name, content, active) -%}
+        {%- macro tab(id, name, content, active) -%}
             {% set tabstyle = "" %}
             {% if active %}
                 {% set tabstyle = "display: block;" %}
             {% endif %}
-            <div id="tab-{{ name }}" class="tab-content" style="{{ tabstyle }}">
+            <div id="tab-{{ name }}-{{ id }}" class="tab-content" style="{{ tabstyle }}">
                 {{ content }}
             </div>
         {% endmacro %}
@@ -59,19 +59,23 @@
         <legend>Real World Applications</legend>
             <div class="tab-container">
                 <ul class="tab-nav">
-                {% for name in workloads.iterkeys() %}
-                    {{ tab_nav(name, loop.first) }}
+                {% for name, workload in workloads %}
+                    {{ tab_nav(loop.index, name, loop.first) }}
                 {% endfor %}
                 </ul>
                 <div class="clearfix"></div>
                 <div class="tab">
-                    {% for name, workload in workloads.iteritems() %}
-                        {{ tab(name, workload, loop.first) }}
+                    {% for name, workload in workloads %}
+                        {{ tab(loop.index, name, workload, loop.first) }}
                     {% endfor %}
                 </div>
             </div>
         </fieldset>
         {% endif %}
+
+        <div class="footer">
+            Cloud Workloads - Version {{ version }} | <a href="/{{ outdir }}/archive">Archives</a>
+        </div>
         </div>
     </body>
 </html>

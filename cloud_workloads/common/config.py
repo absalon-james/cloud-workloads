@@ -1,10 +1,15 @@
 import yaml
 
-# Descripts how to target requested minions for the minion pool.
+# Describes how to target requested minions for the minion pool.
 # Default is everything
 DEFAULT_MINION_POOL = {
     'target': '*',
     'expr_form': 'glob'
+}
+
+# Default rendering options.
+DEFAULT_RENDERER = {
+    'html_doc_root': '/var/www'
 }
 
 
@@ -45,3 +50,10 @@ class YamlConfig(dict):
 
         """
         return self.get('minion_pool', DEFAULT_MINION_POOL)
+
+    def get_renderer(self):
+        """
+        Returns the renderer portion of the config.
+
+        """
+        return self.get('renderer', DEFAULT_RENDERER)
