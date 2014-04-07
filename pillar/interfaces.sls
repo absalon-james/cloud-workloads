@@ -1,3 +1,3 @@
 interfaces:
   public: 'eth0'
-  private: 'eth2'
+  private: 'eth0'
