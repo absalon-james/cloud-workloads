@@ -44,7 +44,7 @@ class Runner(object):
     a combined view.
     """
 
-    def __init__(self, config, credentials=None):
+    def __init__(self, config):
         """
         Inits the runner
 
@@ -52,7 +52,6 @@ class Runner(object):
 
         """
         self.config = config
-        self.credentials = credentials
         self.views = collections.OrderedDict()
         self.workloads = []
         self.primitives_view = None
@@ -64,14 +63,17 @@ class Runner(object):
 
         """
         # Set up the salt client
-        client = Client(credentials=self.credentials)
+        print "Setting up the client"
+        client = Client()
 
         # Set up the minion pool
         pool_config = self.config.get_minion_pool()
 
         try:
+            print "Setting up the pool"
             minions = client.minions(pool_config['target'],
-                                     pool_config['expr_form'])
+                                     pool_config['expr_form'],
+                                     timeout=5)
             pool = MinionPool(minions)
 
             for name, workload_config in self.config.iter_workloads():

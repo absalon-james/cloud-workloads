@@ -1,7 +1,7 @@
 import os
 import salt
 import time
-from salt.client.api import APIClient
+import salt.client
 from handler import Handler, UnfinishedException, UnsuccessfulException, \
     RetcodeException, FailedStateSlsException
 
@@ -59,7 +59,7 @@ class SaltJob(object):
         @param chain - Optional salt job to link this job to in sequence
 
         """
-        # Kwargs passed to the salt api client
+        # Kwargs passed to the salt local client
         self.kwargs = command_kwargs
         # Acceptable return codes
         self.goodcodes = retcodes or set([0])
@@ -195,7 +195,7 @@ class MultiJob(object):
 
         """
         self._jobs = {}
-        self.client = APIClient(opts=MASTER_OPTIONS)
+        self.client = salt.client.LocalClient(mopts=MASTER_OPTIONS)
         self.handler = Handler()
 
     def add(self, job):
@@ -209,7 +209,7 @@ class MultiJob(object):
         @return - Boolean True for successful publish, Boolean False otherwise
 
         """
-        pub_data = self.client.run(job.kwargs)
+        pub_data = self.client.run_job(**(job.kwargs))
         job.set_pub_data(pub_data)
         self._jobs[job.jid] = job
 
@@ -267,7 +267,7 @@ class MultiJob(object):
 
             # Listen for all events with tag set to ''.
             # Need to be able to listen for multiple jobs.
-            event = self.client.get_event(tag='', wait=0.25)
+            event = self.client.event.get_event(tag='', wait=0.25)
 
             # Check for no event received
             if event is None:
