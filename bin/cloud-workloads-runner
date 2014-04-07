@@ -19,22 +19,10 @@ def parse_args():
              "and javascript files.")
     parser.add_argument('output_dir', help=help_)
 
-    help_ = "User for salt external authentication."
-    parser.add_argument('--username', default=None, help=help_)
-
-    help_ = "Password for salt external authentication."
-    parser.add_argument('--password', default=None, help=help_)
-
     return parser.parse_args()
 
 if __name__ == "__main__":
     args = parse_args()
-
-    # Set up credentials
-    if args.username is not None:
-        credentials = Pam(args.username, args.password)
-    else:
-        credentials = None
 
     # Get the configuration
     config = YamlConfig(args.config_file)
@@ -42,7 +30,7 @@ if __name__ == "__main__":
     # Start the archive early
     archive = HtmlArchive(config, args.output_dir)
 
-    runner = Runner(config, credentials=credentials)
+    runner = Runner(config)
     runner.run()
     view = HtmlRenderer(args.output_dir, runner.workloads)
     archive.archive(view)

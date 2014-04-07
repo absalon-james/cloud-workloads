@@ -6,18 +6,12 @@ from job import MultiJob, SaltJob
 class Client(object):
     """Provides an interface for dealing with the salt local client."""
 
-    def __init__(self, credentials=None):
+    def __init__(self):
         """
         Initializes the client.
-        @TODO - Allow salt options to be passed via argument
-
-        @param credentials: Credential dict to pass to salt with every
-            invocation
 
         """
-        if credentials is None:
-            credentials = {}
-        self._credentials = credentials
+        pass
 
     def minions_target(self, minions):
         """
@@ -45,9 +39,7 @@ class Client(object):
         @return SaltJob
 
         """
-        kwargs.update(self._credentials)
-        kwargs.update({'mode': 'async',
-                       'expr_form': expr_form,
+        kwargs.update({'expr_form': expr_form,
                        'arg': (),
                        'fun': 'grains.items',
                        'tgt': target})
@@ -63,9 +55,7 @@ class Client(object):
 
         """
         target = self.minions_target(minions)
-        kwargs.update(self._credentials)
-        kwargs.update({'mode': 'async',
-                       'tgt': target,
+        kwargs.update({'tgt': target,
                        'fun': 'saltutil.sync_states',
                        'expr_form': 'list',
                        'arg': ()})
@@ -82,9 +72,7 @@ class Client(object):
 
         """
         target = self.minions_target(minions)
-        kwargs.update(self._credentials)
-        kwargs.update({'mode': 'async',
-                       'tgt': target,
+        kwargs.update({'tgt': target,
                        'fun': 'grains.setval',
                        'arg': (key, value),
                        'expr_form': 'list'})
@@ -103,9 +91,7 @@ class Client(object):
 
         """
         target = self.minions_target(minions)
-        kwargs.update(self._credentials)
-        kwargs.update({'mode': 'async',
-                       'tgt': target,
+        kwargs.update({'tgt': target,
                        'fun': 'pillar.get',
                        'arg': (key, default),
                        'expr_form': 'list'})
@@ -123,9 +109,7 @@ class Client(object):
 
         """
         target = self.minions_target(minions)
-        kwargs.update(self._credentials)
-        kwargs.update({'mode': 'async',
-                       'tgt': target,
+        kwargs.update({'tgt': target,
                        'fun': 'network.ipaddrs',
                        'arg': (interface,),
                        'expr_form': 'list'})
@@ -144,9 +128,7 @@ class Client(object):
 
         """
         target = self.minions_target(minions)
-        kwargs.update(self._credentials)
-        kwargs.update({'mode': 'async',
-                       'tgt': target,
+        kwargs.update({'tgt': target,
                        'fun': 'state.sls',
                        'expr_form': 'list',
                        'arg': [state]})
@@ -174,9 +156,7 @@ class Client(object):
 
         """
         target = self.minions_target(minions)
-        kwargs.update(self._credentials)
-        kwargs.update({'mode': 'async',
-                       'tgt': target,
+        kwargs.update({'tgt': target,
                        'fun': func,
                        'expr_form': 'list'})
         return SaltJob(kwargs, retcodes=retcodes)
@@ -246,11 +226,10 @@ class Client(object):
 
     def cmd(self, minions, func, **kwargs):
         """
-        Runs a single command. Wrapper for super.cmd.  Adds auth credentials.
+        Runs a single command. Wrapper for super.cmd.
 
         @param target - String salt target
         @param func - Salt function - 'pillar.get', 'network.ipaddrs', etc.
-
         @return - dict
 
         """
