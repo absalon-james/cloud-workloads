@@ -295,7 +295,16 @@ class Installer(object):
                     )
 
     def send_file_sftp(self, src, dst, minion):
+        """
+        Sends a file from src on local machine to dst on minion
+        with sftp. This should be removed once salt can manage files
+        with salt-ssh.
 
+        @param src - String source file location
+        @param dst - String destination file location
+        @param minion - Dictionary describing minion
+
+        """
         print (
             "Sending file via sftp %s to %s on %s"
             % (src, dst, minion['ssh_id'])
@@ -306,13 +315,20 @@ class Installer(object):
             print "Did not find minion %s in the roster." % minion['ssh_id']
 
         host = self.roster[minion['ssh_id']]
-        port = 22
-        transport = paramiko.Transport((host['host'], port))
-        transport.connect(username=host['user'], password=host['passwd'])
-        sftp = paramiko.SFTPClient.from_transport(transport)
+        kwargs = {
+            'look_for_keys': False,
+            'username': host['user'],
+            'password': host.get('passwd'),
+            'key_filename': host.get('priv')
+        }
+
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        ssh.connect(host['host'], **kwargs)
+        sftp = ssh.open_sftp()
         sftp.put(src, dst)
         sftp.close()
-        transport.close()
+        ssh.close()
 
     def move_file(self, src, dst, target='*'):
         """

@@ -28,6 +28,7 @@ setup(
                       'PyYAML'],
     data_files=data_files,
     scripts=[
+        'bin/cloud-workloads-configure',
         'bin/cloud-workloads-runner',
         'bin/cloud-workloads-minion-installer'
     ],

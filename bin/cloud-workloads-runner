@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import argparse
-from cloud_workloads.remote.credentials import Pam
 from cloud_workloads.runner import Runner
 from cloud_workloads.archive import HtmlArchive
 from cloud_workloads.renderers import HtmlRenderer

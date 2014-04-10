@@ -2,8 +2,16 @@
 
 import getpass
 import netifaces
+import os
 import paramiko
-import pprint
+import socket
+import yaml
+
+from cloud_workloads.common.input import get_input, get_yes_no
+from cloud_workloads.remote import ssh
+
+INTERFACES_FILE = '/srv/pillar/interfaces.sls'
+ROSTER_FILE = '/etc/salt/roster'
 
 
 def interfaces_list():
@@ -18,38 +26,6 @@ def interfaces_list():
     interfaces.sort()
     return interfaces
 
-def get_input(prompt, default=""):
-    """
-    Prompts the user for input according to prompt. Allows the use of a
-    default.
-
-    @param prompt - String
-    @param default - String
-    @return string
-
-    """
-    result = raw_input(prompt)
-    if not result:
-        result = default
-    return result
-
-def get_yes_no(prompt, default_yes=False):
-    """
-    Returns true for yes, false otherwise.
-    Asks the user to enter yes or no from the prompt.
-    The default can be set to yes, otherwise it is no.
-
-    @param prompt - String to display to user when asking for yes or no.
-    @param default_yes - Set to true to default user's answer to yes
-    @return Boolean
-
-    """
-    default = 'y' if default_yes else 'n'
-    result = get_input(prompt, default)
-    result = result.lower()
-    if result[0] == 'y':
-        return True
-    return False
 
 def choose_interface(label, default='eth0'):
     """
@@ -80,7 +56,49 @@ def choose_interface(label, default='eth0'):
     return interface
 
 
-def configure_interfaces():
+def pillar_interfaces():
+    """
+    Loads interfaces stored in the interfaces pillar file.
+
+    @returns Tuple - Returns a two element tuple of
+        (public interface, private interface)
+
+    """
+    interface_public = None
+    interface_private = None
+    try:
+        with open(INTERFACES_FILE, 'r') as f:
+            data = yaml.safe_load(f)
+        interface_public = data['interfaces']['public']
+        interface_private = data['interfaces']['private']
+    except KeyError:
+        # Maybe do something with this in the future.
+        pass
+    except Exception:
+        pass
+    return (interface_public, interface_private)
+
+
+def save_interfaces(public, private):
+
+    data = {
+        'interfaces': {
+            'public': public,
+            'private': private
+        }
+    }
+
+    try:
+        with open(INTERFACES_FILE, 'w') as f:
+            f.write(yaml.dump(data))
+    except IOError as e:
+        print "Couldnt save interfaces: ", e
+        exit()
+
+    print "Saved interfaces to %s" % INTERFACES_FILE
+
+
+def configure_interfaces(existing_public, existing_private):
     """
     Presents a list of interfaces available on this machine and asks
     the user to choose a "public" and a "private" interface that do
@@ -98,97 +116,71 @@ def configure_interfaces():
            "on your minions.\n")
 
     default = interfaces[0]
+    if existing_public:
+        default = existing_public
     interface_public = choose_interface('public', default)
 
-    if len(interfaces) > 1:
-        default = [i for i in interfaces if i != interface_public][0]
+    other_interfaces = [i for i in interfaces if i != interface_public]
+    if other_interfaces:
+        default = other_interfaces[0]
+    else:
+        default = interfaces[0]
+
+    if existing_private:
+        default = existing_private
     interface_private = choose_interface('private', default)
 
     print "Public: %s\nPrivate: %s\n" % (interface_public, interface_private)
+    save_interfaces(interface_public, interface_private)
 
 
-def configure_salt_user():
+def ssh_exception(e):
     """
-    Allows the user to type a username and a password. When applying states
-    via stand alone salt, this user will be created and templated into
-    the salt master config.
+    Attempts to print user friendly messages when something happens
+    while ssh'ing.
+
+    @param e - Exception
 
     """
-    prompt = "Salt user: (default saltysomeone): "
-    saltuser = get_input(prompt, default="saltysomeone")
-
-    saltpasswd = None
-    confirmpasswd = None
-    while not saltpasswd or saltpasswd != confirmpasswd:
-        prompt = "\nPassword for %s: " % saltuser
-        saltpasswd = getpass.getpass(prompt)
-
-        prompt = "Confirm password for %s: " % saltuser
-        confirmpasswd = getpass.getpass(prompt)
-
-        if not saltpasswd:
-            print "Invalid password. Please try again."
-            continue
-
-        if saltpasswd != confirmpasswd:
-            print "Passwords do not match. Please try again."
-            continue
-
-        break
-
-    print "Salt user: %s\n" % saltuser
+    if isinstance(e, paramiko.ssh_exception.SSHException):
+        print "Could not authenticate"
+    elif isinstance(e, socket.timeout):
+        print "Connection timed out."
+    elif isinstance(e, socket.gaierror):
+        print e
+    else:
+        print e
 
 
-def ssh_connect_kwargs(user, passwd=None):
-    kwargs = {
-        'username': user,
-    }
-    if passwd:
-        kwargs.update(password=passwd)
-    return kwargs
+def get_key_filename(priv='~/.ssh/id_rsa', pub='~/.ssh/id_rsa.pub'):
+    """
+    Checks that both a private and public rsa key exist. Returns the
+    filepath of the private key
+
+    @param priv - String path to private key
+    @param pub - String path to public key
+    @return String filename to private key or None
+
+    """
+    key_files = [priv, pub]
+    exists = [os.path.isfile(os.path.expanduser(f)) for f in key_files]
+    if all(exists):
+        return os.path.expanduser(key_files[0])
+    return None
 
 
-def test_sftp(host, user, passwd=None, port=22):
-    #try:
-    print "Testing sftp to %s with user %s on port %s" % (host, user, port)
-    transport = paramiko.Transport((host, port))
-    connect_kwargs = ssh_connect_kwargs(user, passwd)
-    transport.connect(**connect_kwargs)
-    sftp = paramiko.SFTPClient.from_transport(transport)
-    sftp.close()
-    transport.close()
-    return True
-    #except Exception as e:
-    #    print ("Sftp to %s with user %s on port %s failed because: "
-    #           "%s - %s" % (host, user, port, type(e), str(e)))
-    return False
+def auth_failed(e):
+    """
+    Simple check to see if an exception was a paramiko authentication
+    exception
+
+    @return - Bool True for yes, False otherwise
+
+    """
+    return isinstance(e, paramiko.ssh_exception.SSHException)
 
 
-def test_ssh_sudo(host, user, passwd=None):
-    try:
-        print "Testing ssh connection with sudo to %s with user %s" % (host, user)
-        ssh = paramiko.SSHClient()
-        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        connect_kwargs = ssh_connect_kwargs(user, passwd)
-        connect_kwargs['timeout'] = 5
-        ssh.connect(host, **connect_kwargs)
-        stdin, stdout, stderr = ssh.exec_command("sudo whoami")
-        result = stdout.read().rstrip()
-        print "Std out for \"sudo whoami\""
-        print result
-        ssh.close()
-        if result == "root":
-            return True
-    except Exception as e:
-        print ("SSH connection with sudo to %s with user %s failed "
-               "because: %s - %s" % (host, user, type(e), str(e)))
-    return False
-
-
-def get_minion_info(previous_minion_info):
-
-    previous_user = previous_minion_info.get('user')
-    previous_passwd = previous_minion_info.get('passwd')
+def get_minion_info(previous, use_key=None):
 
     # Get host
     while(True):
@@ -199,37 +191,122 @@ def get_minion_info(previous_minion_info):
         else:
             break
 
+    if (previous):
+        # Make copy of previous
+        reuse = dict(previous)
+        reuse_args = [host, reuse.get('user')]
+        reuse_kwargs = {
+            'passwd': reuse.get('passwd'),
+            'key_filename': reuse.get('priv')
+        }
+        reuse_sudo, _ = ssh.test_ssh_sudo(*reuse_args, **reuse_kwargs)
+        reuse_sftp, _ = ssh.test_sftp(*reuse_args, **reuse_kwargs)
+        if reuse_sudo and reuse_sftp:
+            print "Reusing previous credentials."
+            reuse['host'] = host
+            return reuse
+
     # Get user
     while(True):
-        prompt = "User(default %s): " % previous_user if previous_user else "User: "
-        user = get_input(prompt, previous_user)
+        prompt = "User: "
+        user = get_input(prompt, default="")
         if not user:
             print "Invalid user"
         else:
             break
 
-    # Provide password?
-    prompt = "Use a password for user %s(Y/n default yes): " % user
-    use_passwd = get_yes_no(prompt, default_yes=True)
+    if (use_key):
+        # Test attempt with key
+        success, e = ssh.test_ssh_with_key(host, user, key_filename=use_key)
+        if not success and not auth_failed(e):
+            print "Unable to ssh into host: "
+            ssh_exception(e)
+            return False
 
-    # Get optional password
-    if use_passwd:
-        prompt = "Password: " if not previous_passwd else "Password(default to previous): "
-        passwd = getpass.getpass(prompt)
-        if not passwd:
-            passwd = previous_passwd
+    # Default passwd to None
+    passwd = None
 
+    if not use_key or use_key and not success:
+        prompt = "Password: "
+        max_attempts = 3
+        attempt = 0
+        while attempt < max_attempts:
+            passwd = getpass.getpass(prompt)
+            success, e = ssh.test_ssh_with_pass(host, user, passwd)
+            if not success:
+                if auth_failed(e):
+                    attempt += 1
+                    continue
+                else:
+                    print "Unable to ssh into host: "
+                    ssh_exception(e)
+                    return False
+            break
+        else:
+            print "Max password attempts reached."
+            return False
+
+    if not success:
+        print "Unable to ssh into host: "
+        ssh_exception(e)
+        return False
+
+    # Test sudo
+    test_args = [host, user]
+    test_kwargs = {'passwd': passwd, 'key_filename': use_key}
+    success, e = ssh.test_ssh_sudo(*test_args, **test_kwargs)
+    if not success:
+        print "Sudo failed. Need to be able to sudo with nopasswd: "
+        ssh_exception(e)
+        return False
+
+    # Test sftp
+    success, e = ssh.test_sftp(*test_args, **test_kwargs)
+    if not success:
+        print "Sftp failed: "
+        ssh_exception(e)
+        return False
+
+    # Assemble minion dictionary that will be saved to yaml
     minion_dict = {
         'host': host,
         'user': user,
         'sudo': True,
         'timeout': 360
     }
-
-    if use_passwd:
+    if passwd:
         minion_dict.update(passwd=passwd)
-
+    else:
+        minion_dict.update(priv=use_key)
     return minion_dict
+
+
+def save_roster(roster):
+    """
+    Saves the roster to ROSTER_FILE after checking for duplicate hosts.
+
+    @param roster - Dict describing the minion roster
+
+    """
+    # Remove duplicates
+    counter = 1
+    hosts = set()
+    cleaned_roster = {}
+    for m in roster.values():
+        if m['host'] not in hosts:
+            cleaned_roster['minion-%s' % counter] = m
+            counter += 1
+            hosts.add(m['host'])
+
+    try:
+        with open(ROSTER_FILE, 'w') as f:
+            f.write(yaml.dump(cleaned_roster))
+    except IOError as e:
+        print "Couldn't save the roster: ", e
+        exit()
+
+    print "Saved the roster to %s" % ROSTER_FILE
+
 
 def configure_salt_roster():
     """
@@ -238,6 +315,8 @@ def configure_salt_roster():
     as they wish.
 
     """
+    use_key = get_key_filename()
+
     # Build roster information
     roster = {}
     minion_info = {}
@@ -245,56 +324,42 @@ def configure_salt_roster():
     while(True):
 
         print "Collecting for minion %s" % id_
-        minion_info = get_minion_info(minion_info)
+        minion_info = get_minion_info(minion_info, use_key)
+        if not minion_info:
+            print "Please reenter the connection information."
+            continue
 
-        prompt = "Test connection?(Y/n default Y): "
-        if get_yes_no(prompt, default_yes=True):
-
-            passed_sftp = False
-            passed_sudo = test_ssh_sudo(minion_info['host'], minion_info['user'], passwd=minion_info.get('passwd'))
-            if passed_sudo:
-                passed_sftp = test_sftp(minion_info['host'], minion_info['user'], passwd=minion_info.get('passwd'))
-
-            if not passed_sftp:
-                print "Please reenter the connection information."
-                continue
-
-        roster.update({
-            'minion%s' % id_: minion_info
-        })
+        roster.update({'minion%s' % id_: minion_info})
 
         prompt = "Add another minion?(Y/n default Y): "
         if not get_yes_no(prompt, default_yes=True):
             break
-
         id_ += 1
 
-    pprint.pprint(roster)
+    if len(minion_info) > 0:
+        save_roster(roster)
 
 
 if __name__ == "__main__":
-
-    
     print "\nWelcome to the Cloud Workloads Configuration utility."
+
+    interface_public, interface_private = pillar_interfaces()
 
     print ("\nCloud Workloads requires minions that are running workloads to "
            "have similar network interfaces. Minions should have a public and "
            "a private interface.")
-    prompt = "Configure public and private interfaces now? (Y/n Default Y): "
-    if get_yes_no(prompt, default_yes=True):
-        configure_interfaces()
+    if interface_public and interface_private:
+        print "Your public interface is configured as %s" % interface_public
+        print "Your private interface is configured as %s" % interface_private
+        prompt = "Do you want to change this configuration?(y/n Default n): "
+        change_interfaces = get_yes_no(prompt)
+    else:
+        change_interfaces = True
 
-    print ("\nCloud Workloads requires a user for external authentication with "
-           "salt using pam.")
-    prompt = "Configure external auth user for salt now? (Y/n Default Y): "
-    if get_yes_no(prompt, default_yes=True):
-        configure_salt_user()
+    if change_interfaces:
+        configure_interfaces(interface_public, interface_private)
 
-    print ("\nCloud Workloads will, by default, require 7 minions to execute "
-           "workloads. Each minion will need to run the salt-minion service "
-           "and be connected to the salt-master service running on this "
-           "machine. Cloud Workloads can setup salt-minion on your minions "
-           "for you but will need connection information.")
-    prompt = "Configure ssh connection information now? (Y/n Default Y): "
-    if get_yes_no(prompt, default_yes=True):
-        configure_salt_roster()
+    print ("\nCloud Workloads requires 7 machines by default. Salt-minion "
+           "can be deployed and configured for you after collecting some "
+           "connection information.")
+    configure_salt_roster()
