@@ -1,8 +1,5 @@
 include README.md
 include sample.yaml
 include install_utils.py
-include post_install.py
 include cloud_workloads/assets/*
 include cloud_workloads/views/*
-recursive-include pillar *
-recursive-include states *

@@ -55,7 +55,7 @@ class Workload(BaseWorkload):
         'hadoop_example': 'hadoop-examples-1.2.1.jar',
         'hadoop_user': 'hdfs',
         'terasort_data_path': '/teragen',
-        'terasort_size': 500000,
+        'terasort_size': 5000000,
         'formula_dir': '/srv/salt/hadoop'
     }
 

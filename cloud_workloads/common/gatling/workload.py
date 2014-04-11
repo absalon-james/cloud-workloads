@@ -1,5 +1,7 @@
 import cStringIO
+import os
 from cloud_workloads.common.workload import Workload as BaseWorkload
+from cloud_workloads.remote.job import MASTER_OPTIONS
 from result import GatlingStdoutParser, GatlingResult
 from stats import Stats
 
@@ -133,6 +135,25 @@ class Workload(BaseWorkload):
                          (users, duration, webheads)
         }
 
+    def log_file_path(self, minion_id, log_file_name):
+        """
+        Simulation log files are moved to master using salt.cp.push.
+        Returns the full path to that file which is:
+        <cachedir>/minions/<minion_id>/files/<log_file_name>
+
+        @param minion_id - String name of the minion
+        @param log_file_name - String name of file that was moved over
+        @return - String name of file on master
+
+        """
+        return os.path.join(
+            MASTER_OPTIONS.get('cachedir', '/var/cache/salt/master'),
+            'minions',
+            minion_id,
+            'files',
+            log_file_name.lstrip(os.path.sep)
+        )
+
     def run(self):
         """
         Runs the Gatling workload
@@ -180,16 +201,37 @@ class Workload(BaseWorkload):
             result.update(stdout_parser.parse(stdout))
             print result
 
-            # Attempt to get contents of simulation log
+            # Push the simulation log file to the master
             kwargs = {
                 'timeout': timeout,
-                'arg': ('cat %s' % result.simulation_log,)
+                'arg': (result.simulation_log,)
             }
-            log_resp = self.client.cmd(runners[0].id_, 'cmd.run_all', **kwargs)
+            log_resp = self.client.cmd(runners[0].id_, 'cp.push', **kwargs)
             log_resp = log_resp.values()[0]
-            stdout = cStringIO.StringIO(log_resp.get('stdout'))
+
+            # Read the simulation log file
+            filename = self.log_file_path(
+                runners[0].id_,
+                result.simulation_log
+            )
             stats = Stats()
-            stats.update(stdout)
+            with open(filename, 'r') as f:
+                stats.update(f)
+
+            # Attempt to get contents of simulation log
+            #kwargs = {
+            #    'timeout': timeout,
+            #    'arg': ('cat %s' % result.simulation_log,)
+            #}
+            #log_resp = self.client.cmd(
+            #    runners[0].id_,
+            #    'cmd.run_all',
+            #    **kwargs
+            #)
+            #log_resp = log_resp.values()[0]
+            #stdout = cStringIO.StringIO(log_resp.get('stdout'))
+            #stats = Stats()
+            #stats.update(stdout)
             result.update({'stats': stats})
             self._results.append(result)
             if retcode not in [0, 2] or not result.success:

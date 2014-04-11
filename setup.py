@@ -1,5 +1,4 @@
-from install_utils import readme, find_data_files
-from post_install import PostDownloadInstall, PostDownloadDevelop
+from install_utils import readme
 from setuptools import setup, find_packages
 from cloud_workloads.meta import version, license
 
@@ -9,8 +8,6 @@ description = (
 )
 
 data_files = [('/etc/cloud_workloads', ['sample.yaml'])]
-data_files += find_data_files('pillar', '/srv/pillar')
-data_files += find_data_files('states', '/srv/salt')
 
 setup(
     name="cloud_workloads",
@@ -31,9 +28,5 @@ setup(
         'bin/cloud-workloads-configure',
         'bin/cloud-workloads-runner',
         'bin/cloud-workloads-minion-installer'
-    ],
-    cmdclass={
-        'install': PostDownloadInstall,
-        'develop': PostDownloadDevelop
-    }
+    ]
 )

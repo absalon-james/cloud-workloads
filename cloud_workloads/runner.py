@@ -3,6 +3,7 @@ import traceback
 from remote.client import Client
 from remote.pool import MinionPool
 from remote.job import MultiJobException
+from remote.pool import NoAvailableMinionException
 
 
 class MissingWorkloadModuleError(Exception):
@@ -109,7 +110,7 @@ class Runner(object):
             workload.run()
 
         # Catch salt job related exceptions
-        except MultiJobException as e:
+        except (MultiJobException, NoAvailableMinionException) as e:
             print "Multi job problem found. need to save the trace"
             workload.data_dict['exception_trace'] = traceback.format_exc()
             print e

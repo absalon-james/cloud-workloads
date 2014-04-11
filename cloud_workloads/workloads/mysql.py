@@ -81,7 +81,7 @@ class Workload(BaseWorkload):
         'user': 'dbt2',
         'password': 'dbt2',
         'database': 'dbt2',
-        'warehouses': 5,
+        'warehouses': 10,
         'mysql_path': '/usr/lib/mysql',
 
         # Should be updated via pillar or workload config

@@ -26,9 +26,9 @@ class Workload(GatlingWorkload):
         'webhead_role': 'magento_web',
         'gatling_role': 'magento_gatling',
         'gatling_user': 'gatling',
-        'duration': '20',
-        'users_start': '20',
-        'users_step': '25'
+        'duration': '90',
+        'users_start': '30',
+        'users_step': '30'
     }
 
     DEPLOY_SEQUENCE = [

@@ -1,6 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 
 import argparse
+import cloud_workloads.remote.patch
 import netifaces
 import os
 import paramiko
@@ -161,9 +162,15 @@ class Installer(object):
         resp = self.run('hostname', func='cmd.run_all')
         for resp_id, hostname in resp.iteritems():
             if hostname and (resp_id in self.minions):
-                self.minions[resp_id].update(hostname=hostname)
+                #Version 2014.1.1 - Output was changed to dict
+                if isinstance(hostname, dict):
+                    value = hostname['stdout']
+                # Versuib 2014.1.0
+                else:
+                    value = hostname
+                self.minions[resp_id].update(hostname=value)
 
-    def validate_bootstrapped(self, text):
+    def validate_bootstrapped(self, resp):
         """
         Validates that the stdout of running the bootstrap script indicates
         that salt-minion was successfully installed.
@@ -171,6 +178,12 @@ class Installer(object):
         @param text - String of stdout sent back by salt-ssh
         @return boolean - True for success, False otherwise
         """
+        # Version 2014.1.1 - Output changed to dict
+        if isinstance(resp, dict):
+            text = resp['stdout']
+        # Version 2014.1.0 - Output was stdout
+        else:
+            text = resp
         return 'Salt installed!' in text
 
     def bootstrap_minions(self):
@@ -343,7 +356,13 @@ class Installer(object):
         arg_str = "mv %s %s" % (src, dst)
         resp = self.run(arg_str, func="cmd.run_all", target=target)
         for resp_id, resp_value in resp.iteritems():
-            if resp_value:
+            # Version 2014.1.1 - Output changed to dict
+            if isinstance(resp_value, dict):
+                value = resp_value['stdout']
+            # Version 2014.1.0 - Output was simple string
+            else:
+                value = resp_value
+            if value:
                 print "Unable to move %s to %s on %s:" % (src, dst, target)
                 print resp_value
 

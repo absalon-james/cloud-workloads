@@ -26,9 +26,9 @@ class Workload(GatlingWorkload):
         'webhead_role': 'drupal_web',
         'gatling_role': 'drupal_gatling',
         'gatling_user': 'gatling',
-        'duration': '20',
-        'users_start': '20',
-        'users_step': '25'
+        'duration': '90',
+        'users_start': '500',
+        'users_step': '200'
     }
 
     DEPLOY_SEQUENCE = [

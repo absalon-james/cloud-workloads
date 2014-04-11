@@ -37,7 +37,7 @@ class Workload(BaseWorkload):
             'execl'
         ],
         'cpu_dir': 'UnixBench',
-        'cpu_iterations_per_test': 10,
+        'cpu_iterations_per_test': 5,
 
         'io_tests': [
             'randomrw.f',
