@@ -34,8 +34,8 @@ class Workload(GatlingWorkload):
     DEPLOY_SEQUENCE = [
         {'state': 'magento.db_master',
          'next': {'state': 'magento.db_slave'}},
-        {'state': 'magento.web'},
-        {'state': 'magento.gatling'}
+        {'state': 'magento.web',
+         'next': {'state': 'magento.gatling'}}
     ]
 
     UNDEPLOY_SEQUENCE = [
