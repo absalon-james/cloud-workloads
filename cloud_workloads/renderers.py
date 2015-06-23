@@ -8,7 +8,7 @@ class HtmlRenderer(str):
 
     """
 
-    def __new__(self, outdir, workloads):
+    def __new__(self, workloads):
         """
         Returns a string that is the rendered html document.
 
@@ -42,7 +42,6 @@ class HtmlRenderer(str):
         # Render the entire view
         return View(
             'main.html',
-            outdir=outdir,
             version=version,
             primitives=primitives,
             workloads=zip(other_names, other_views)

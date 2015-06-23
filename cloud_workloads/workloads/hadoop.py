@@ -156,7 +156,8 @@ class Workload(BaseWorkload):
         print "running: ", teragen_cmd
         kwargs = {
             'kwarg': {
-                'runas': self.config['hadoop_user']
+                'runas': self.config['hadoop_user'],
+                'shell': '/bin/bash'
             },
             'arg': (teragen_cmd,),
             'timeout': 3600
